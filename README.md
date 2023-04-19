@@ -1,0 +1,1 @@
+# Official Atera Vscode extension
