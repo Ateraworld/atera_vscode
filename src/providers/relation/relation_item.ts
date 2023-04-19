@@ -5,7 +5,7 @@ export class RelationEditorItem extends vscode.TreeItem {
         public readonly context: string,
         collapsibleState?: vscode.TreeItemCollapsibleState,
         iconPath?: vscode.ThemeIcon,
-        public readonly itemModel?: {}
+        public readonly itemModel?: any
     ) {
         super(label, collapsibleState);
         this.iconPath = iconPath;

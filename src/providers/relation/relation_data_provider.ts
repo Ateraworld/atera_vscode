@@ -9,19 +9,21 @@ import { sanitizeActivityModel } from "./sanitize/sanitize";
 
 export class RelationEditorDataProvider implements vscode.TreeDataProvider<RelationEditorItem> {
     static id: string = "relation-editor";
+
     private _onDidChangeTreeData: vscode.EventEmitter<RelationEditorItem | undefined | null | void> =
         new vscode.EventEmitter<RelationEditorItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<RelationEditorItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
     constructor() {
-        vscode.workspace.onDidChangeTextDocument((arg) => this.onRelationEdit(arg));
-    }
-
-    onRelationEdit(event: vscode.TextDocumentChangeEvent) {
-        if (event.contentChanges.length > 0) {
+        vscode.workspace.onDidChangeTextDocument((event) => {
+            if (event.contentChanges.length > 0) {
+                this.refresh();
+            }
+        });
+        vscode.window.onDidChangeActiveTextEditor((event) => {
             this.refresh();
-        }
+        });
     }
 
     refresh(): void {
@@ -133,10 +135,9 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             validateInput: (val) => {
                 if (isNaN(parseFloat(val))) return "a number is required";
             },
-            ignoreFocusOut: true,
         });
         if (res === undefined || isNaN(parseFloat(res))) return;
-        let lat = parseFloat(res);
+        let lat = parseFloat(res.replaceAll(",", "."));
 
         res = await vscode.window.showInputBox({
             title: "Longitude",
@@ -144,20 +145,20 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             validateInput: (val) => {
                 if (isNaN(parseFloat(val))) return "a number is required";
             },
-            ignoreFocusOut: true,
         });
         if (res === undefined || isNaN(parseFloat(res))) return;
-        let long = parseFloat(res);
+        let long = parseFloat(res.replaceAll(",", "."));
 
         let description = (await vscode.window.showInputBox({ title: "Description", value: "" })) ?? "";
-        let mapLink = (await vscode.window.showQuickPick(["true", "false"], { title: "Add a map link" })) ?? "";
+        let mapLink = (await vscode.window.showQuickPick(["false", "true"], { title: "Add a map link" })) ?? "";
 
         documentModel.location.points[name] = {
             latitude: lat,
             longitude: long,
         };
-        if (description.length > 0) documentModel.images[name].description = description;
-        if (mapLink === "true") documentModel.images[name].map_link = true;
+        console.log(documentModel.location.points[name]);
+        if (description.length > 0) documentModel.location.points[name].description = description;
+        if (mapLink === "true") documentModel.location.points[name].map_link = true;
         overrideCurrentRelationModel(documentModel);
     }
     async addMark(item: RelationEditorItem): Promise<void> {
@@ -170,14 +171,31 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         } else if (item.context == "editor-italic") {
             await compileMark("i");
         } else if (item.context == "editor-act-ref") {
-            let root = vscode.workspace.getConfiguration("atera").get("activitiesDataRoot") as string | undefined;
+            let config = vscode.workspace.getConfiguration("atera");
+            let root = config.get("dataRoot") as string | undefined;
             if (root === undefined || !fs.existsSync(root)) {
-                vscode.window.showWarningMessage(
-                    "Unable to fetch activities: activitiesDataRoot is not correctly set in settings"
+                let res = await vscode.window.showWarningMessage(
+                    "Unable to fetch activities: dataRoot is not correctly set in settings",
+                    "Pick root folder"
                 );
+                let folder = await vscode.window.showOpenDialog({
+                    canSelectMany: false,
+                    openLabel: "Select dataRoot",
+                    canSelectFiles: false,
+                    canSelectFolders: true,
+                });
+                if (folder === undefined) return;
+
+                await config.update("dataRoot", folder.at(0)?.fsPath, vscode.ConfigurationTarget.Global);
+                vscode.window.showInformationMessage("dataRoot set to " + folder);
+
                 await compileMark("act");
             } else {
-                let elements = elementsInPath(root, true);
+                if (!fs.existsSync(`${root}/activities`)) {
+                    await compileMark("act");
+                    return;
+                }
+                let elements = elementsInPath(`${root}/activities`, true);
                 let jsons = elements.filter((e) => e.split(".").pop() == "json");
                 let availableActivities: [string, any][] = [];
                 jsons.forEach((element) => {
@@ -186,6 +204,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                         availableActivities.push([model.id, model]);
                     }
                 });
+
                 await compileMark("act", undefined, availableActivities);
             }
         }
@@ -198,6 +217,33 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         vscode.commands.registerCommand("relation-editor.addImage", () => this.addImage());
         vscode.commands.registerCommand("relation-editor.addMark", (item: RelationEditorItem) => this.addMark(item));
         vscode.commands.registerCommand("relation-editor.sanitizeRelation", () => this.sanitizeRelation());
+        vscode.commands.registerCommand("relation-editor.removeRelationItem", (item: RelationEditorItem) =>
+            this.removeRelationItem(item)
+        );
+    }
+    async removeRelationItem(item: RelationEditorItem): Promise<void> {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage("Editor not valid");
+            return;
+        }
+        let documentModel: any;
+        try {
+            documentModel = JSON.parse(editor.document.getText());
+        } catch (_) {
+            return;
+        }
+        if (item.context == "point-instance") {
+            delete documentModel.location.points[item.label];
+            overrideCurrentRelationModel(documentModel);
+        } else if (item.context == "image-instance") {
+            delete documentModel.images[item.label];
+            overrideCurrentRelationModel(documentModel);
+        } else if (item.context === "section-instance") {
+            console.log(item);
+            delete documentModel.relation.sections[item.itemModel?.id];
+            overrideCurrentRelationModel(documentModel);
+        }
     }
 
     async sanitizeRelation(): Promise<void> {
@@ -207,8 +253,13 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             return;
         }
         await editor.document.save();
-        sanitizeActivityModel(editor.document.fileName);
-        vscode.window.showInformationMessage("Activity sanitized");
+        let warnings = sanitizeActivityModel(editor.document.fileName);
+        console.log(warnings);
+        if (warnings.length <= 0) {
+            vscode.window.showInformationMessage("Activity sanitized");
+        } else {
+            vscode.window.showErrorMessage("Activity is not sanitized\n● " + warnings.join("● "));
+        }
     }
 
     getTreeItem(element: RelationEditorItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -298,7 +349,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                                 "section-instance",
                                 vscode.TreeItemCollapsibleState.None,
                                 undefined,
-                                (e[1] as any).content
+                                { id: e[0], model: (e[1] as any).content }
                             )
                     )
                 );
