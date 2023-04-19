@@ -14,47 +14,63 @@ class DescriptedQuickPickItem implements vscode.QuickPickItem {
     }
 }
 
-export async function compileMarkedToken(tokenId?: string) {
+export async function compileMark(tokenId?: string, payload?: string, availableActivities?: [string, any][]) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-        vscode.window.showWarningMessage("Editor not valid X(");
+        vscode.window.showWarningMessage("Editor not valid");
         return;
     }
-    tokenId ??= await vscode.window.showQuickPick(["b", "i", "act", "pos", "ph"], { title: "Select the token" });
-    const selectedText = editor.document.getText(editor.selection);
-    const tokenText =
-        selectedText.length <= 0 ? await vscode.window.showInputBox({ prompt: "Text", value: "" }) : selectedText;
-    if (tokenText === undefined) return;
-    let payloadText: string | undefined = undefined;
+    tokenId ??= await vscode.window.showQuickPick(["b", "i", "act", "pos", "ph"], {
+        title: "Select the token",
+        placeHolder: "type of the marker",
+    });
+
     let documentModel: any;
     try {
         documentModel = JSON.parse(editor.document.getText());
     } catch (_) {}
-    if (tokenId == "pos") {
-        let points = Object.entries(documentModel?.location.points);
-        if (points.length > 0) {
-            let pointName = await vscode.window.showQuickPick(
-                points.map((e) => new DescriptedQuickPickItem(e[0], (e[1] as any).description ?? "")),
-                { title: "Points" }
-            );
-            if (pointName === undefined) return;
-            payloadText = pointName?.label;
+    let tokenText: string | undefined = undefined;
+    if (tokenId === "act" && availableActivities !== undefined && availableActivities.length > 0) {
+        let actId = await vscode.window.showQuickPick(
+            availableActivities.map((e) => new DescriptedQuickPickItem(e[1].name ?? "", e[0])),
+            { title: "Activities" }
+        );
+        payload = actId?.description;
+        tokenText = actId?.label;
+    }
+    const selectedText = editor.document.getText(editor.selection);
+    tokenText ??=
+        selectedText.length <= 0
+            ? await vscode.window.showInputBox({ title: "Text", placeHolder: "text to display", value: "" })
+            : selectedText;
+    if (tokenText === undefined) return;
+    if (payload === undefined) {
+        if (tokenId === "pos") {
+            let points = Object.entries(documentModel?.location.points);
+            if (points.length > 0) {
+                let pointName = await vscode.window.showQuickPick(
+                    points.map((e) => new DescriptedQuickPickItem(e[0], (e[1] as any).description ?? "")),
+                    { title: "Points" }
+                );
+                if (pointName === undefined) return;
+                payload = pointName?.label;
+            }
+        } else if (tokenId === "ph") {
+            let photos = Object.entries(documentModel?.images);
+            if (photos.length > 0) {
+                let photoName = await vscode.window.showQuickPick(
+                    photos.map((e) => new DescriptedQuickPickItem(e[0], (e[1] as any).title ?? "")),
+                    { title: "Photos" }
+                );
+                payload = photoName?.label;
+            }
         }
     }
-    if (tokenId == "ph") {
-        let photos = Object.entries(documentModel?.images);
-        if (photos.length > 0) {
-            let photoName = await vscode.window.showQuickPick(
-                photos.map((e) => new DescriptedQuickPickItem(e[0], (e[1] as any).title ?? "")),
-                { title: "Photos" }
-            );
-            payloadText = photoName?.label;
-        }
-    }
-    payloadText ??= (await vscode.window.showInputBox({ prompt: "Payload", value: "" })) ?? "";
+    payload ??=
+        (await vscode.window.showInputBox({ title: "Payload", placeHolder: "payload of the marker", value: "" })) ?? "";
     editor
         .edit((editBuilder) => {
-            let text = "${[" + tokenText + "]" + tokenId + "(" + payloadText + ")}";
+            let text = "${[" + tokenText + "]" + tokenId + "(" + payload + ")}";
             editBuilder.replace(editor.selection, text);
         })
         .then((_) => {
