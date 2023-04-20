@@ -221,6 +221,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             this.removeRelationItem(item)
         );
     }
+
     async removeRelationItem(item: RelationEditorItem): Promise<void> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -270,24 +271,25 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         const editor = vscode.window.activeTextEditor;
         if (!editor) return;
 
-        if (!element) {
-            return [
-                new RelationEditorItem(
-                    "Overview",
-                    "overview",
-                    vscode.TreeItemCollapsibleState.Expanded,
-                    new vscode.ThemeIcon("symbol-structure")
-                ),
-                new RelationEditorItem(
-                    "Editor",
-                    "editor",
-                    vscode.TreeItemCollapsibleState.Collapsed,
-                    new vscode.ThemeIcon("edit")
-                ),
-            ];
-        } else {
-            let items: RelationEditorItem[] = [];
+        let items: RelationEditorItem[] = [];
+        try {
             let documentModel = JSON.parse(editor.document.getText());
+            if (!element) {
+                return [
+                    new RelationEditorItem(
+                        "Overview",
+                        "overview",
+                        vscode.TreeItemCollapsibleState.Expanded,
+                        new vscode.ThemeIcon("symbol-structure")
+                    ),
+                    new RelationEditorItem(
+                        "Editor",
+                        "editor",
+                        vscode.TreeItemCollapsibleState.Collapsed,
+                        new vscode.ThemeIcon("edit")
+                    ),
+                ];
+            }
             if (element.context === "overview") {
                 return Promise.resolve([
                     new RelationEditorItem(
@@ -379,6 +381,16 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 );
                 return Promise.resolve(items);
             }
+        } catch (error) {
+            return Promise.resolve([
+                ...items,
+                new RelationEditorItem(
+                    "Relation document has errors",
+                    "editor-relation-error",
+                    vscode.TreeItemCollapsibleState.None,
+                    new vscode.ThemeIcon("warning")
+                ),
+            ]);
         }
     }
 }
