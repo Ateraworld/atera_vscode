@@ -3,7 +3,7 @@
   "displayName": "Atera",
   "description": "The official Atera vscode extension",
   "icon": "assets/logo_4k.png",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Ateraworld",
     "email": "atera.world@gmail.com",
@@ -28,7 +28,7 @@
           "when": "false"
         },
         {
-          "command": "relation-editor.addMark",
+          "command": "relation-editor.addLocation",
           "when": "false"
         }
       ],
@@ -42,6 +42,11 @@
           "command": "relation-editor.sanitizeRelation",
           "when": "view == relation-editor",
           "group": "navigation"
+        },
+        {
+          "command": "relation-editor.setParams",
+          "when": "view == relation-editor",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -53,11 +58,6 @@
         {
           "command": "relation-editor.removeRelationItem",
           "when": "view == relation-editor && (viewItem == point-instance || viewItem == image-instance || viewItem == section-instance)",
-          "group": "inline"
-        },
-        {
-          "command": "relation-editor.addMark",
-          "when": "view == relation-editor && (viewItem == point-instance || viewItem == image-instance || viewItem == editor-bold || viewItem == editor-italic || viewItem == editor-act-ref)",
           "group": "inline"
         },
         {
@@ -98,6 +98,21 @@
       ]
     },
     "commands": [
+      {
+        "command": "relation-editor.addLocation",
+        "title": "Atera: Add Location",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "relation-editor.setParams",
+        "title": "Atera: Set Params",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "relation-editor.addSymbol",
+        "title": "Atera: Add Symbol",
+        "icon": "$(insert)"
+      },
       {
         "command": "relation-editor.refresh",
         "title": "Atera: Refresh Relation Editor",
@@ -143,7 +158,7 @@
         "atera.dataRoot": {
           "type": "string",
           "default": "",
-          "description": "The root folder of the data. If specified, allows more advanced utilities such as graphical selection of activities references in relations and more."
+          "markdownDescription": "The **root** folder of the SDK data.\n\nIf specified, allows more advanced utilities such as graphical selection of activities references in relations and more.\n\nConsidering the **SDK** structure, this path should point at `%atera_admin_sdk%/data`"
         }
       }
     }

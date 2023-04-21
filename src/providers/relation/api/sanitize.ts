@@ -24,7 +24,7 @@ export function sanitizeActivityModel(modelPath: string): string[] {
 
     if (
         !(
-            model.attestation.period === undefined ||
+            model.attestation.period == null ||
             model.attestation.period === null ||
             model.attestation.period === "" ||
             attestationPeriodRegex.test(model.attestation.period)
@@ -32,6 +32,35 @@ export function sanitizeActivityModel(modelPath: string): string[] {
     ) {
         logs.push("attestation period not formatted");
         status = true;
+    }
+
+    if (model.location.country == null || model.location.country.length <= 0) {
+        logs.push("location.country is not compiled");
+    }
+    if (model.location.region == null || model.location.region.length <= 0) {
+        logs.push("location.region is not compiled");
+    }
+    if (model.location.province == null || model.location.province.length <= 0) {
+        logs.push("location.province is not compiled");
+    }
+    if (model.location.zone == null || model.location.zone.length <= 0) {
+        logs.push("location.zone is not compiled");
+    }
+
+    let points = Object.entries(model.location.points);
+    for (let [k, v] of points) {
+        let val = v as any;
+        if (val.longitude == null || val.longitude === 0 || val.latitude == null || val.latitude === 0) {
+            logs.push(k + " coodinates are not set");
+        }
+    }
+    if (model.attestation == null) {
+        logs.push("attestation coodinates are not set");
+    } else {
+        let val = model.attestation as any;
+        if (val.longitude == null || val.longitude === 0 || val.latitude == null || val.latitude === 0) {
+            logs.push("attestation coodinates are not set");
+        }
     }
 
     fs.writeFileSync(modelPath, JSON.stringify(model, null, "\t"));

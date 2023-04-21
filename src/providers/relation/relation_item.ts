@@ -1,14 +1,29 @@
 import * as vscode from "vscode";
+
+class ItemParams {
+    readonly collapsibleState?: vscode.TreeItemCollapsibleState;
+    readonly icon?: vscode.ThemeIcon;
+    readonly command?: string;
+    readonly description?: string;
+    readonly tooltip?: string;
+    readonly itemModel?: any;
+}
+
 export class RelationEditorItem extends vscode.TreeItem {
+    public readonly itemModel?: any;
+    public readonly label: string;
     constructor(
-        public readonly label: string,
-        public readonly context: string,
-        collapsibleState?: vscode.TreeItemCollapsibleState,
-        iconPath?: vscode.ThemeIcon,
-        public readonly itemModel?: any
+        label: string,
+        contextValue: string,
+        { collapsibleState, icon, command, description, itemModel, tooltip }: ItemParams
     ) {
         super(label, collapsibleState);
-        this.iconPath = iconPath;
-        this.contextValue = context;
+        this.label = label;
+        this.description = description;
+        this.tooltip = tooltip;
+        this.itemModel = itemModel;
+        this.command = command !== undefined ? ({ command: command, arguments: [this] } as vscode.Command) : undefined;
+        this.iconPath = icon;
+        this.contextValue = contextValue;
     }
 }
