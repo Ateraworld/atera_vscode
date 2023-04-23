@@ -165,10 +165,10 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "del /s /q out && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "clean": "rmdir /s /q out"
+    "clean": "del /s /q out"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",

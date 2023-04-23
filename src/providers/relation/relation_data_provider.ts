@@ -7,7 +7,7 @@ import { calculateLocations, elementsInPath, readAvailableActivities, toWordCapi
 import { RelationEditorItem } from "./relation_item";
 import { DescriptedQuickPickItem } from "../../common/descripted_quick_pick_item";
 import path from "path";
-import atera from "atera_admin_sdk/api/atera";
+import * as atera from "atera_admin_sdk/api/atera";
 
 export class RelationEditorDataProvider implements vscode.TreeDataProvider<RelationEditorItem> {
     static id: string = "relation-editor";
