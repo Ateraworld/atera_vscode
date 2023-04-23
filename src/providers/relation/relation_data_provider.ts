@@ -5,13 +5,14 @@ import { capitalize } from "../../common/augmentation";
 import { compileMark } from "../../common/marked_text_editor";
 import { calculateLocations, elementsInPath, readAvailableActivities, toWordCapitalized } from "../../common/utils";
 import { RelationEditorItem } from "./relation_item";
-import { sanitizeActivityModel } from "./api/sanitize";
 import { DescriptedQuickPickItem } from "../../common/descripted_quick_pick_item";
 import path from "path";
-import { suggestActivityParams } from "./api/suggest";
+import atera from "atera_admin_sdk/api/atera";
 
 export class RelationEditorDataProvider implements vscode.TreeDataProvider<RelationEditorItem> {
     static id: string = "relation-editor";
+
+    private analysisProblems: [string, any][] = [];
 
     private _onDidChangeTreeData: vscode.EventEmitter<RelationEditorItem | undefined | null | void> =
         new vscode.EventEmitter<RelationEditorItem | undefined | null | void>();
@@ -27,9 +28,23 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         vscode.window.onDidChangeActiveTextEditor((event) => {
             this.refresh();
         });
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            try {
+                let model = JSON.parse(editor.document.getText());
+                this.analysisProblems = computeAnalysis(model);
+            } catch (_) {}
+        }
     }
 
     refresh(): void {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            try {
+                let model = JSON.parse(editor.document.getText());
+                this.analysisProblems = computeAnalysis(model);
+            } catch (_) {}
+        }
         this._onDidChangeTreeData.fire();
     }
 
@@ -275,9 +290,14 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         if (!editor) return;
         try {
             let documentModel = JSON.parse(editor.document.getText());
-            suggestActivityParams(documentModel, true);
+            atera.activity.computeActivityModelParams(documentModel, { apply: true });
             overrideCurrentRelationModel(documentModel);
             vscode.window.showInformationMessage("Parameters adjusted");
+            //* Terminal example
+            // let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
+            // terminal ??= vscode.window.createTerminal("upload");
+            // terminal?.sendText("atera activity sanitize " + path.basename(path.dirname(editor.document.fileName)));
+            // terminal?.show();
         } catch (_) {
             return;
         }
@@ -411,7 +431,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             return;
         }
         await editor.document.save();
-        let warnings = sanitizeActivityModel(editor.document.fileName);
+        let warnings = atera.activity.sanitizeActivityModel(editor.document.fileName);
         if (warnings.length <= 0) {
             vscode.window.showInformationMessage("Activity sanitized");
         } else {
@@ -447,9 +467,9 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 ];
             }
             if (element.contextValue === "analysis") {
-                let tips = computeAnalysis(documentModel);
+                // let tips = computeAnalysis(documentModel);
                 items.push(
-                    ...tips.map(
+                    ...this.analysisProblems.map(
                         (t) =>
                             new RelationEditorItem(t[0], t[0], {
                                 description: t[1].description,

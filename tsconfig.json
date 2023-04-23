@@ -2,7 +2,10 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es2022",
+        "moduleResolution": "node",
         "outDir": "out",
+        "baseUrl": ".",
+        "resolveJsonModule": true,
         //"lib": ["ES2020"],
         "sourceMap": true,
         "rootDir": "src",
