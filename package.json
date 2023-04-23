@@ -168,6 +168,7 @@
     "compile": "del /s /q out && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
+    "build": "del /s /q out && tsc",
     "clean": "del /s /q out"
   },
   "devDependencies": {
