@@ -403,7 +403,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         } else if (item.contextValue == "image-instance") {
             delete documentModel.images[item.label];
             overrideCurrentRelationModel(documentModel);
-        } else if (item.contextValue === "section-instance") {
+        } else if (item.contextValue == "section-instance") {
             console.log(item);
             delete documentModel.relation.sections[item.itemModel?.id];
 
