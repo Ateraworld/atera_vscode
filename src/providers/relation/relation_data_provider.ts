@@ -431,11 +431,16 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             return;
         }
         await editor.document.save();
-        let warnings = atera.activity.sanitizeActivityModel(editor.document.fileName);
-        if (warnings.length <= 0) {
-            vscode.window.showInformationMessage("Activity sanitized");
-        } else {
-            vscode.window.showErrorMessage("Activity is not sanitized\n● " + warnings.join(" ● "));
+        try {
+            let warnings = atera.activity.sanitizeActivityModel(editor.document.fileName);
+            console.log(warnings.join(" "));
+            if (warnings.length <= 0) {
+                vscode.window.showInformationMessage("Activity sanitized");
+            } else {
+                vscode.window.showErrorMessage("Activity is not sanitized\n● " + warnings.join(" ● "));
+            }
+        } catch (error) {
+            vscode.window.showWarningMessage(error!.toString());
         }
     }
 

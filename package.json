@@ -3,7 +3,7 @@
   "displayName": "Atera",
   "description": "The official Atera vscode extension",
   "icon": "assets/logo_4k.png",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": {
     "name": "Ateraworld",
     "email": "atera.world@gmail.com",
@@ -164,8 +164,8 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "del /s /q out && tsc -p ./",
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "build": "del /s /q out && tsc",
@@ -187,7 +187,7 @@
   },
   "dependencies": {
     "@types/node": "^18.15.13",
-    "atera_admin_sdk": "github:Ateraworld/atera_admin_sdk#api",
+    "atera_admin_sdk": "github:Ateraworld/atera_admin_sdk#main",
     "ts-node": "^10.9.1"
   }
 }
