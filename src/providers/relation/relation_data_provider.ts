@@ -28,24 +28,19 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         vscode.window.onDidChangeActiveTextEditor((event) => {
             this.refresh();
         });
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            try {
-                let model = JSON.parse(editor.document.getText());
-                this.analysisProblems = computeAnalysis(model);
-            } catch (_) {}
-        }
+        this.refresh();
     }
 
     refresh(): void {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             try {
-                let model = JSON.parse(editor.document.getText());
-                this.analysisProblems = computeAnalysis(model);
-            } catch (_) {}
+                this.analysisProblems = computeAnalysis(editor.document);
+                this._onDidChangeTreeData.fire();
+            } catch (error) {
+                console.log(error);
+            }
         }
-        this._onDidChangeTreeData.fire();
     }
 
     async addImage(): Promise<void> {
@@ -280,9 +275,19 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         );
         vscode.commands.registerCommand("relation-editor.sanitizeRelation", () => this.sanitizeRelation());
         vscode.commands.registerCommand("relation-editor.addSymbol", () => this.addSymbol());
+        vscode.commands.registerCommand("relation-editor.uploadRelation", () => this.uploadRelation());
         vscode.commands.registerCommand("relation-editor.removeRelationItem", (item: RelationEditorItem) =>
             this.removeRelationItem(item)
         );
+    }
+
+    async uploadRelation(): Promise<any> {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) return;
+        let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
+        terminal ??= vscode.window.createTerminal("upload");
+        terminal?.sendText("atera activity upload " + path.basename(path.dirname(editor.document.fileName)), false);
+        terminal?.show();
     }
 
     async setParams(): Promise<any> {
@@ -290,14 +295,10 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         if (!editor) return;
         try {
             let documentModel = JSON.parse(editor.document.getText());
+            atera.activity.computeActivityModelMetrics(documentModel, { apply: true });
             atera.activity.computeActivityModelParams(documentModel, { apply: true });
             overrideCurrentRelationModel(documentModel);
             vscode.window.showInformationMessage("Parameters adjusted");
-            //* Terminal example
-            // let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
-            // terminal ??= vscode.window.createTerminal("upload");
-            // terminal?.sendText("atera activity sanitize " + path.basename(path.dirname(editor.document.fileName)));
-            // terminal?.show();
         } catch (_) {
             return;
         }
@@ -432,8 +433,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         }
         await editor.document.save();
         try {
-            let warnings = atera.activity.sanitizeActivityModel(editor.document.fileName);
-            console.log(warnings.join(" "));
+            let warnings = atera.activity.sanitizeActivityModel(JSON.parse(editor.document.getText()));
             if (warnings.length <= 0) {
                 vscode.window.showInformationMessage("Activity sanitized");
             } else {
@@ -487,6 +487,16 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 return Promise.resolve(items);
             } else if (element.contextValue === "overview") {
                 return Promise.resolve([
+                    new RelationEditorItem("Tokens", "tokens", {
+                        description: documentModel.attestation?.tokens?.toString(),
+                        collapsibleState: vscode.TreeItemCollapsibleState.None,
+                        icon: new vscode.ThemeIcon("circle-large"),
+                    }),
+                    new RelationEditorItem("Rank", "rank", {
+                        collapsibleState: vscode.TreeItemCollapsibleState.None,
+                        description: documentModel.attestation?.rank?.toString(),
+                        icon: new vscode.ThemeIcon("star-full"),
+                    }),
                     new RelationEditorItem("Location", "location", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("map"),

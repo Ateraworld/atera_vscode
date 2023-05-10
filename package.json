@@ -3,7 +3,7 @@
   "displayName": "Atera",
   "description": "The official Atera vscode extension",
   "icon": "assets/logo_4k.png",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {
     "name": "Ateraworld",
     "email": "atera.world@gmail.com",
@@ -14,7 +14,7 @@
     "url": "https://github.com/Ateraworld/atera_vscode"
   },
   "engines": {
-    "vscode": "^1.77.0"
+    "vscode": "^1.78.0"
   },
   "categories": [
     "Other"
@@ -35,6 +35,11 @@
       "view/title": [
         {
           "command": "relation-editor.refresh",
+          "when": "view == relation-editor",
+          "group": "navigation"
+        },
+        {
+          "command": "relation-editor.uploadRelation",
           "when": "view == relation-editor",
           "group": "navigation"
         },
@@ -98,6 +103,11 @@
       ]
     },
     "commands": [
+      {
+        "command": "relation-editor.uploadRelation",
+        "title": "Atera: Upload Relation",
+        "icon": "$(cloud-upload)"
+      },
       {
         "command": "relation-editor.addLocation",
         "title": "Atera: Add Location",
@@ -175,18 +185,18 @@
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/uuid": "^9.0.1",
-    "@types/vscode": "^1.77.0",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@types/vscode": "^1.78.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.5",
+    "@typescript-eslint/parser": "^5.59.5",
     "@vscode/test-electron": "^2.3.0",
-    "esbuild": "^0.17.17",
-    "eslint": "^8.36.0",
+    "esbuild": "^0.17.18",
+    "eslint": "^8.40.0",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@types/node": "^18.15.13",
+    "@types/node": "^18.16.7",
     "atera_admin_sdk": "github:Ateraworld/atera_admin_sdk#main",
     "ts-node": "^10.9.1"
   }
