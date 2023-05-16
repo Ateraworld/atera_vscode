@@ -170,7 +170,8 @@
       }
     ],
     "activationEvents": [
-      "onView:relation-provider"
+      "onView:relation-provider",
+      "onView:command-provider"
     ],
     "configuration": {
       "title": "Atera",
