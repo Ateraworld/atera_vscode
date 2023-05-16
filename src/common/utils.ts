@@ -1,25 +1,7 @@
 import fs from "fs";
-import path from "path";
 import { capitalize } from "./augmentation";
 import * as vscode from "vscode";
-
-export function elementsInPath(path: string, recursive: boolean = false): string[] {
-    let items: string[] = [];
-    _traverseDir(path, items, recursive);
-    return items;
-}
-
-function _traverseDir(dir: string, items: string[], recursive: boolean = false) {
-    fs.readdirSync(dir).forEach((file) => {
-        let fullPath = path.join(dir, file);
-        if (fs.lstatSync(fullPath).isDirectory() && recursive) {
-            items.push(fullPath);
-            _traverseDir(fullPath, items);
-        } else {
-            items.push(fullPath);
-        }
-    });
-}
+import { elementsInPath } from "atera_admin_sdk/api/src/common/path_ext";
 
 export function toWordCapitalized(str: string): string {
     if (str.length <= 0) return str;
@@ -41,8 +23,29 @@ export function toWordCapitalized(str: string): string {
 
     return buf;
 }
-
-export async function rootGuard(): Promise<string | undefined> {
+export async function sourceRootGuard(): Promise<string | undefined> {
+    let config = vscode.workspace.getConfiguration("atera");
+    let root = config.get("sourceRoot") as string | undefined;
+    if (root === undefined || !fs.existsSync(root)) {
+        let res = await vscode.window.showWarningMessage(
+            "Unable to fetch codebase: sourceRoot is not correctly set in settings",
+            "Pick root folder"
+        );
+        let folder = await vscode.window.showOpenDialog({
+            canSelectMany: false,
+            openLabel: "Select sourceRoot",
+            canSelectFiles: false,
+            canSelectFolders: true,
+        });
+        if (folder === undefined) return undefined;
+        root = folder.at(0)?.fsPath;
+        await config.update("sourceRoot", root, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage("sourceRoot set to " + folder);
+    }
+    console.log(root);
+    return root;
+}
+export async function dataRootGuard(): Promise<string | undefined> {
     let config = vscode.workspace.getConfiguration("atera");
     let root = config.get("dataRoot") as string | undefined;
     if (root === undefined || !fs.existsSync(root)) {
@@ -66,7 +69,7 @@ export async function rootGuard(): Promise<string | undefined> {
 }
 
 export async function readDefinitions(): Promise<any | undefined> {
-    let root = await rootGuard();
+    let root = await dataRootGuard();
     if (root === undefined) return undefined;
     if (!fs.existsSync(`${root}/common/definitions.json`)) {
         return undefined;
@@ -76,7 +79,7 @@ export async function readDefinitions(): Promise<any | undefined> {
 }
 
 export async function calculateLocations(): Promise<any | undefined> {
-    let root = await rootGuard();
+    let root = await dataRootGuard();
     if (root === undefined) return undefined;
     if (!fs.existsSync(`${root}/activities`)) {
         return undefined;
@@ -114,12 +117,12 @@ export async function calculateLocations(): Promise<any | undefined> {
 }
 
 export async function readAvailableActivities(): Promise<[string, any][]> {
-    let root = await rootGuard();
+    let root = await dataRootGuard();
     if (root === undefined) return [];
     if (!fs.existsSync(`${root}/activities`)) {
         return [];
     }
-    let elements = elementsInPath(`${root}/activities`, true);
+    let elements = elementsInPath(`${root}/activities`, { recursive: true });
     let jsons = elements.filter((e) => e.split(".").pop() == "json");
     let availableActivities: [string, any][] = [];
     jsons.forEach((element) => {

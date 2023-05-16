@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-class ItemParams {
+export class ItemParams {
     readonly collapsibleState?: vscode.TreeItemCollapsibleState;
     readonly icon?: vscode.ThemeIcon;
     readonly command?: string;
@@ -9,7 +9,7 @@ class ItemParams {
     readonly itemModel?: any;
 }
 
-export class RelationEditorItem extends vscode.TreeItem {
+export class Item extends vscode.TreeItem {
     public readonly itemModel?: any;
     public readonly label: string;
     constructor(

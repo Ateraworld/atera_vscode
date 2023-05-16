@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { DescriptedQuickPickItem } from "./descripted_quick_pick_item";
+import { DescriptedQuickPickItem } from "../../common/descripted_quick_pick_item";
 import { insertTextAtCursor } from "./editor";
 
 export interface MarkParameters {

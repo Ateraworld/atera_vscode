@@ -3,7 +3,7 @@
   "displayName": "Atera",
   "description": "The official Atera vscode extension",
   "icon": "assets/logo_4k.png",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "author": {
     "name": "Ateraworld",
     "email": "atera.world@gmail.com",
@@ -24,55 +24,60 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "relation-editor.removeRelationItem",
+          "command": "relation-provider.removeRelationItem",
           "when": "false"
         },
         {
-          "command": "relation-editor.addLocation",
+          "command": "relation-provider.addLocation",
           "when": "false"
         }
       ],
       "view/title": [
         {
-          "command": "relation-editor.refresh",
-          "when": "view == relation-editor",
+          "command": "code-provider.refresh",
+          "when": "view == code-provider",
           "group": "navigation"
         },
         {
-          "command": "relation-editor.uploadRelation",
-          "when": "view == relation-editor",
+          "command": "relation-provider.refresh",
+          "when": "view == relation-provider",
           "group": "navigation"
         },
         {
-          "command": "relation-editor.sanitizeRelation",
-          "when": "view == relation-editor",
+          "command": "relation-provider.uploadRelation",
+          "when": "view == relation-provider",
           "group": "navigation"
         },
         {
-          "command": "relation-editor.setParams",
-          "when": "view == relation-editor",
+          "command": "relation-provider.sanitizeRelation",
+          "when": "view == relation-provider",
+          "group": "navigation"
+        },
+        {
+          "command": "relation-provider.setParams",
+          "when": "view == relation-provider",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
-          "command": "relation-editor.addPoint",
-          "when": "view == relation-editor && viewItem == points",
+          "command": "relation-provider.addPoint",
+          "when": "view == relation-provider && viewItem == points",
           "group": "inline"
         },
         {
-          "command": "relation-editor.removeRelationItem",
-          "when": "view == relation-editor && (viewItem == point-instance || viewItem == image-instance || viewItem == section-instance)",
+          "command": "relation-provider.removeRelationItem",
+          "when": "view == relation-provider && (viewItem == point-instance || viewItem == image-instance || viewItem == section-instance)",
           "group": "inline"
         },
         {
-          "command": "relation-editor.addImage",
-          "when": "view == relation-editor && viewItem == images",
+          "command": "relation-provider.addImage",
+          "when": "view == relation-provider && viewItem == images",
           "group": "inline"
         },
         {
-          "command": "relation-editor.addSection",
-          "when": "view == relation-editor && viewItem == sections",
+          "command": "relation-provider.addSection",
+          "when": "view == relation-provider && viewItem == sections",
           "group": "inline"
         }
       ]
@@ -80,13 +85,13 @@
     "views": {
       "atera": [
         {
-          "id": "relation-editor",
+          "id": "relation-provider",
           "name": "Relation",
           "icon": "",
           "contextualTitle": "Atera"
         },
         {
-          "id": "code-editor",
+          "id": "code-provider",
           "name": "Code",
           "icon": "",
           "contextualTitle": "Atera"
@@ -104,63 +109,68 @@
     },
     "commands": [
       {
-        "command": "relation-editor.uploadRelation",
+        "command": "code-provider.refresh",
+        "title": "Atera: Refresh Code Provider",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "relation-provider.uploadRelation",
         "title": "Atera: Upload Relation",
         "icon": "$(cloud-upload)"
       },
       {
-        "command": "relation-editor.addLocation",
+        "command": "relation-provider.addLocation",
         "title": "Atera: Add Location",
         "icon": "$(edit)"
       },
       {
-        "command": "relation-editor.setParams",
+        "command": "relation-provider.setParams",
         "title": "Atera: Set Params",
         "icon": "$(graph)"
       },
       {
-        "command": "relation-editor.addSymbol",
+        "command": "relation-provider.addSymbol",
         "title": "Atera: Add Symbol",
         "icon": "$(insert)"
       },
       {
-        "command": "relation-editor.refresh",
+        "command": "relation-provider.refresh",
         "title": "Atera: Refresh Relation Editor",
         "icon": "$(refresh)"
       },
       {
-        "command": "relation-editor.addPoint",
+        "command": "relation-provider.addPoint",
         "title": "Atera: Add Interest Point",
         "icon": "$(diff-added)"
       },
       {
-        "command": "relation-editor.removeRelationItem",
+        "command": "relation-provider.removeRelationItem",
         "title": "Atera: Remove Relation Item",
         "icon": "$(remove)"
       },
       {
-        "command": "relation-editor.addSection",
+        "command": "relation-provider.addSection",
         "title": "Atera: Add Relation Section",
         "icon": "$(diff-added)"
       },
       {
-        "command": "relation-editor.addImage",
+        "command": "relation-provider.addImage",
         "title": "Atera: Add Image",
         "icon": "$(diff-added)"
       },
       {
-        "command": "relation-editor.addMark",
+        "command": "relation-provider.addMark",
         "title": "Atera: Add Mark",
         "icon": "$(insert)"
       },
       {
-        "command": "relation-editor.sanitizeRelation",
+        "command": "relation-provider.sanitizeRelation",
         "title": "Atera: Sanitize Relation",
         "icon": "$(sparkle)"
       }
     ],
     "activationEvents": [
-      "onView:relation-editor"
+      "onView:relation-provider"
     ],
     "configuration": {
       "title": "Atera",
@@ -169,6 +179,11 @@
           "type": "string",
           "default": "",
           "markdownDescription": "The **root** folder of the SDK data.\n\nIf specified, allows more advanced utilities such as graphical selection of activities references in relations and more.\n\nConsidering the **SDK** structure, this path should point at `%atera_admin_sdk%/data`"
+        },
+        "atera.sourceRoot": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "The **root** folder of the Atera source repository.\n\nIf specified, allows dynamic code base analysis and problem detection.\n\nConsidering the Atera structure, this path should point at `%atera%`"
         }
       }
     }

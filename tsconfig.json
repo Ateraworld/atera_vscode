@@ -4,11 +4,14 @@
         "target": "es2022",
         "moduleResolution": "node",
         "outDir": "out",
-        "baseUrl": ".",
+        //"baseUrl": "./",
         "resolveJsonModule": true,
         //"lib": ["ES2020"],
         "sourceMap": true,
-        "rootDir": "src",
+        //"rootDir": "src",
+        "paths": {
+            "src/*": ["./src/*"]
+        },
         "esModuleInterop": true,
         "strict": true /* enable all strict type-checking options */
         /* Additional Checks */

@@ -1,23 +1,23 @@
 import * as vscode from "vscode";
 import fs from "fs";
-import { computeAnalysis, insertTextAtCursor, overrideCurrentRelationModel } from "../../common/editor";
+import { computeAnalysis, insertTextAtCursor, overrideCurrentRelationModel } from "./editor";
 import { capitalize } from "../../common/augmentation";
-import { compileMark } from "../../common/marked_text_editor";
-import { calculateLocations, elementsInPath, readAvailableActivities, toWordCapitalized } from "../../common/utils";
-import { RelationEditorItem } from "./relation_item";
+import { compileMark } from "./marked_text_editor";
+import { calculateLocations, readAvailableActivities, toWordCapitalized } from "../../common/utils";
 import { DescriptedQuickPickItem } from "../../common/descripted_quick_pick_item";
 import path from "path";
 import * as atera from "atera_admin_sdk/api/atera";
+import { Item } from "../../common/item_param";
 
-export class RelationEditorDataProvider implements vscode.TreeDataProvider<RelationEditorItem> {
-    static id: string = "relation-editor";
+export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
+    static id: string = "relation-provider";
 
     private analysisProblems: [string, any][] = [];
 
-    private _onDidChangeTreeData: vscode.EventEmitter<RelationEditorItem | undefined | null | void> =
-        new vscode.EventEmitter<RelationEditorItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<RelationEditorItem | undefined | null | void> =
-        this._onDidChangeTreeData.event;
+    private _onDidChangeTreeData: vscode.EventEmitter<Item | undefined | null | void> = new vscode.EventEmitter<
+        Item | undefined | null | void
+    >();
+    readonly onDidChangeTreeData: vscode.Event<Item | undefined | null | void> = this._onDidChangeTreeData.event;
 
     constructor() {
         vscode.workspace.onDidChangeTextDocument((event) => {
@@ -82,7 +82,8 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             let storagePath = `${editor.document.fileName}/../storage`;
             console.log(storagePath);
             if (storagePath !== undefined && fs.existsSync(storagePath)) {
-                let images = elementsInPath(storagePath)
+                let images = atera.path_ext
+                    .elementsInPath(storagePath)
                     .filter((e) => e.endsWith(".webp"))
                     .map((e) => path.parse(e).base);
 
@@ -233,7 +234,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         overrideCurrentRelationModel(documentModel);
     }
 
-    async addMark(item: RelationEditorItem | undefined): Promise<void> {
+    async addMark(item: Item | undefined): Promise<void> {
         console.log("addmark");
         if (item === undefined) {
             await compileMark({});
@@ -262,21 +263,17 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
     }
 
     registerComands() {
-        vscode.commands.registerCommand("relation-editor.refresh", () => this.refresh());
-        vscode.commands.registerCommand("relation-editor.addPoint", () => this.addPoint());
-        vscode.commands.registerCommand("relation-editor.addSection", () => this.addSection());
-        vscode.commands.registerCommand("relation-editor.addImage", () => this.addImage());
-        vscode.commands.registerCommand("relation-editor.setParams", () => this.setParams());
-        vscode.commands.registerCommand("relation-editor.addLocation", (item: RelationEditorItem) =>
-            this.addLocation(item)
-        );
-        vscode.commands.registerCommand("relation-editor.addMark", (item: RelationEditorItem | undefined) =>
-            this.addMark(item)
-        );
-        vscode.commands.registerCommand("relation-editor.sanitizeRelation", () => this.sanitizeRelation());
-        vscode.commands.registerCommand("relation-editor.addSymbol", () => this.addSymbol());
-        vscode.commands.registerCommand("relation-editor.uploadRelation", () => this.uploadRelation());
-        vscode.commands.registerCommand("relation-editor.removeRelationItem", (item: RelationEditorItem) =>
+        vscode.commands.registerCommand("relation-provider.refresh", () => this.refresh());
+        vscode.commands.registerCommand("relation-provider.addPoint", () => this.addPoint());
+        vscode.commands.registerCommand("relation-provider.addSection", () => this.addSection());
+        vscode.commands.registerCommand("relation-provider.addImage", () => this.addImage());
+        vscode.commands.registerCommand("relation-provider.setParams", () => this.setParams());
+        vscode.commands.registerCommand("relation-provider.addLocation", (item: Item) => this.addLocation(item));
+        vscode.commands.registerCommand("relation-provider.addMark", (item: Item | undefined) => this.addMark(item));
+        vscode.commands.registerCommand("relation-provider.sanitizeRelation", () => this.sanitizeRelation());
+        vscode.commands.registerCommand("relation-provider.addSymbol", () => this.addSymbol());
+        vscode.commands.registerCommand("relation-provider.uploadRelation", () => this.uploadRelation());
+        vscode.commands.registerCommand("relation-provider.removeRelationItem", (item: Item) =>
             this.removeRelationItem(item)
         );
     }
@@ -304,7 +301,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         }
     }
 
-    async addLocation(item: RelationEditorItem): Promise<void> {
+    async addLocation(item: Item): Promise<void> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) return;
         let documentModel: any | undefined = undefined;
@@ -386,7 +383,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         }
     }
 
-    async removeRelationItem(item: RelationEditorItem): Promise<void> {
+    async removeRelationItem(item: Item): Promise<void> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showWarningMessage("Editor not valid");
@@ -433,39 +430,43 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         }
         await editor.document.save();
         try {
-            let warnings = atera.activity.sanitizeActivityModel(JSON.parse(editor.document.getText()));
-            if (warnings.length <= 0) {
-                vscode.window.showInformationMessage("Activity sanitized");
+            let model = JSON.parse(editor.document.getText());
+            let results = atera.activity.sanitizeActivityModel(model, { fix: true });
+            await overrideCurrentRelationModel(model);
+            if (results[0].length <= 0) {
+                vscode.window.showInformationMessage(
+                    "Activity sanitized" + (results[1].length > 0 ? " with warnings" : "")
+                );
             } else {
-                vscode.window.showErrorMessage("Activity is not sanitized\n● " + warnings.join(" ● "));
+                vscode.window.showErrorMessage("Activity is not sanitized\n● " + results[0].join(" ● "));
             }
         } catch (error) {
             vscode.window.showWarningMessage(error!.toString());
         }
     }
 
-    getTreeItem(element: RelationEditorItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    getTreeItem(element: Item): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
 
-    getChildren(element?: RelationEditorItem | undefined): vscode.ProviderResult<RelationEditorItem[]> {
+    getChildren(element?: Item | undefined): vscode.ProviderResult<Item[]> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) return;
 
-        let items: RelationEditorItem[] = [];
+        let items: Item[] = [];
         try {
             let documentModel = JSON.parse(editor.document.getText());
             if (!element) {
                 return [
-                    new RelationEditorItem("Analysis", "analysis", {
+                    new Item("Analysis", "analysis", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("search"),
                     }),
-                    new RelationEditorItem("Editor", "editor", {
+                    new Item("Editor", "editor", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("edit"),
                     }),
-                    new RelationEditorItem("Overview", "overview", {
+                    new Item("Overview", "overview", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("symbol-structure"),
                     }),
@@ -476,7 +477,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 items.push(
                     ...this.analysisProblems.map(
                         (t) =>
-                            new RelationEditorItem(t[0], t[0], {
+                            new Item(t[0], t[0], {
                                 description: t[1].description,
                                 itemModel: t[1],
                                 tooltip: t[1].description,
@@ -487,25 +488,25 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 return Promise.resolve(items);
             } else if (element.contextValue === "overview") {
                 return Promise.resolve([
-                    new RelationEditorItem("Tokens", "tokens", {
+                    new Item("Tokens", "tokens", {
                         description: documentModel.attestation?.tokens?.toString(),
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         icon: new vscode.ThemeIcon("circle-large"),
                     }),
-                    new RelationEditorItem("Rank", "rank", {
+                    new Item("Rank", "rank", {
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
                         description: documentModel.attestation?.rank?.toString(),
                         icon: new vscode.ThemeIcon("star-full"),
                     }),
-                    new RelationEditorItem("Location", "location", {
+                    new Item("Location", "location", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("map"),
                     }),
-                    new RelationEditorItem("Images", "images", {
+                    new Item("Images", "images", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("device-camera"),
                     }),
-                    new RelationEditorItem("Sections", "sections", {
+                    new Item("Sections", "sections", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("bookmark"),
                     }),
@@ -515,11 +516,11 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 items.push(
                     ...entries.map(
                         (e) =>
-                            new RelationEditorItem(e[0], "point-instance", {
+                            new Item(e[0], "point-instance", {
                                 collapsibleState: vscode.TreeItemCollapsibleState.None,
                                 itemModel: e[1] as any,
                                 description: (e[1] as any).description,
-                                command: "relation-editor.addMark",
+                                command: "relation-provider.addMark",
                             })
                     )
                 );
@@ -529,12 +530,12 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 items.push(
                     ...entries.map(
                         (e) =>
-                            new RelationEditorItem(e[0], "image-instance", {
+                            new Item(e[0], "image-instance", {
                                 collapsibleState: vscode.TreeItemCollapsibleState.None,
                                 description: (e[1] as any).title,
                                 tooltip: (e[1] as any).url,
                                 itemModel: e[1] as any,
-                                command: "relation-editor.addMark",
+                                command: "relation-provider.addMark",
                             })
                     )
                 );
@@ -544,7 +545,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 items.push(
                     ...entries.map(
                         (e) =>
-                            new RelationEditorItem((e[1] as any).title, "section-instance", {
+                            new Item((e[1] as any).title, "section-instance", {
                                 collapsibleState: vscode.TreeItemCollapsibleState.None,
                                 description: e[0],
                                 itemModel: { id: e[0], model: (e[1] as any).content },
@@ -557,14 +558,14 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
                 items.push(
                     ...entries.map(
                         (e) =>
-                            new RelationEditorItem(e[0], e[0] !== "points" ? "location-instance" : e[0], {
+                            new Item(e[0], e[0] !== "points" ? "location-instance" : e[0], {
                                 collapsibleState:
                                     typeof e[1] === "object"
                                         ? vscode.TreeItemCollapsibleState.Expanded
                                         : vscode.TreeItemCollapsibleState.None,
                                 itemModel: { id: e[0] },
                                 description: e[0] !== "points" ? (e[1] as string) : undefined,
-                                command: e[0] !== "points" ? "relation-editor.addLocation" : undefined,
+                                command: e[0] !== "points" ? "relation-provider.addLocation" : undefined,
                             })
                     )
                 );
@@ -572,25 +573,25 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
             } else if (element.contextValue === "editor") {
                 items.push(
                     ...[
-                        new RelationEditorItem("Bold", "editor-bold", {
+                        new Item("Bold", "editor-bold", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
                             icon: new vscode.ThemeIcon("bold"),
-                            command: "relation-editor.addMark",
+                            command: "relation-provider.addMark",
                         }),
-                        new RelationEditorItem("Italic", "editor-italic", {
+                        new Item("Italic", "editor-italic", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
                             icon: new vscode.ThemeIcon("italic"),
-                            command: "relation-editor.addMark",
+                            command: "relation-provider.addMark",
                         }),
-                        new RelationEditorItem("Activity Reference", "editor-act-ref", {
+                        new Item("Activity Reference", "editor-act-ref", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
                             icon: new vscode.ThemeIcon("link"),
-                            command: "relation-editor.addMark",
+                            command: "relation-provider.addMark",
                         }),
-                        new RelationEditorItem("Symbol", "editor-symbol", {
+                        new Item("Symbol", "editor-symbol", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
                             icon: new vscode.ThemeIcon("symbol-parameter"),
-                            command: "relation-editor.addSymbol",
+                            command: "relation-provider.addSymbol",
                         }),
                     ]
                 );
@@ -599,7 +600,7 @@ export class RelationEditorDataProvider implements vscode.TreeDataProvider<Relat
         } catch (error) {
             return Promise.resolve([
                 ...items,
-                new RelationEditorItem("Relation document has errors", "editor-relation-error", {
+                new Item("Relation document has errors", "editor-relation-error", {
                     description: error?.toString(),
                     tooltip: error?.toString(),
                     collapsibleState: vscode.TreeItemCollapsibleState.None,
