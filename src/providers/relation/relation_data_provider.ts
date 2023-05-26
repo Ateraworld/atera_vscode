@@ -281,23 +281,30 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
     async uploadRelation(): Promise<any> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) return;
-        let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
-        terminal ??= vscode.window.createTerminal("upload");
-        terminal?.sendText("atera activity upload " + path.basename(path.dirname(editor.document.fileName)), false);
-        terminal?.show();
+        try {
+            let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
+            terminal ??= vscode.window.createTerminal("upload");
+            terminal?.sendText("atera activity upload " + path.basename(path.dirname(editor.document.fileName)), false);
+            terminal?.show();
+        } catch (error) {
+            vscode.window.showWarningMessage(error!.toString());
+        }
     }
 
     async setParams(): Promise<any> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) return;
         try {
-            let documentModel = JSON.parse(editor.document.getText());
-            atera.activity.computeActivityModelMetrics(documentModel, { apply: true });
-            atera.activity.computeActivityModelParams(documentModel, { apply: true });
-            overrideCurrentRelationModel(documentModel);
-            vscode.window.showInformationMessage("Parameters adjusted");
-        } catch (_) {
-            return;
+            let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
+            terminal ??= vscode.window.createTerminal("params");
+            terminal?.sendText(
+                "atera activity set_params " +
+                    path.basename(path.dirname(editor.document.fileName)) +
+                    " --adjust-metrics"
+            );
+            terminal?.show();
+        } catch (error) {
+            vscode.window.showWarningMessage(error!.toString());
         }
     }
 
@@ -430,16 +437,21 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
         }
         await editor.document.save();
         try {
-            let model = JSON.parse(editor.document.getText());
-            let results = atera.activity.sanitizeActivityModel(model, { fix: true });
-            await overrideCurrentRelationModel(model);
-            if (results[0].length <= 0) {
-                vscode.window.showInformationMessage(
-                    "Activity sanitized" + (results[1].length > 0 ? " with warnings" : "")
-                );
-            } else {
-                vscode.window.showErrorMessage("Activity is not sanitized\n● " + results[0].join(" ● "));
-            }
+            let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
+            terminal ??= vscode.window.createTerminal("sanitize");
+            terminal?.sendText("atera activity sanitize " + path.basename(path.dirname(editor.document.fileName)));
+            terminal?.show();
+
+            // let model = JSON.parse(editor.document.getText());
+            // let results = atera.activity.sanitizeActivityModel(model, { fix: true });
+            // await overrideCurrentRelationModel(model);
+            // if (results[0].length <= 0) {
+            //     vscode.window.showInformationMessage(
+            //         "Activity sanitized" + (results[1].length > 0 ? " with warnings" : "")
+            //     );
+            // } else {
+            //     vscode.window.showErrorMessage("Activity is not sanitized\n● " + results[0].join(" ● "));
+            // }
         } catch (error) {
             vscode.window.showWarningMessage(error!.toString());
         }

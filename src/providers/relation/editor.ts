@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import * as atera from "atera_admin_sdk/api/atera";
-import fs from "fs";
 
 export function computeAnalysis(document: vscode.TextDocument): [string, any][] {
     let problems: [string, any][] = [];
