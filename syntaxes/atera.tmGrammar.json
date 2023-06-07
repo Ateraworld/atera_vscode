@@ -1,0 +1,25 @@
+{
+    "scopeName": "source.atera",
+    "patterns": [
+        {
+            "include": "#mark"
+        }
+    ],
+    "repository": {
+        "mark": {
+            "name": "keyword.mark.atera",
+            "match": "\\$\\{\\[(.+?(?=]))\\]([a-zA-z0-9]+)\\((.*?(?=\\)))\\)\\}",
+            "captures": {
+                "1": {
+                    "name": "string.text.atera"
+                },
+                "2": {
+                    "name": "support.type.atera"
+                },
+                "3": {
+                    "name": "variable.payload.atera"
+                }
+            }
+        }
+    }
+}

@@ -27,22 +27,22 @@ export async function sourceRootGuard(): Promise<string | undefined> {
     let config = vscode.workspace.getConfiguration("atera");
     let root = config.get("sourceRoot") as string | undefined;
     if (root === undefined || !fs.existsSync(root)) {
-        let res = await vscode.window.showWarningMessage(
-            "Unable to fetch codebase: sourceRoot is not correctly set in settings",
-            "Pick root folder"
-        );
-        let folder = await vscode.window.showOpenDialog({
-            canSelectMany: false,
-            openLabel: "Select sourceRoot",
-            canSelectFiles: false,
-            canSelectFolders: true,
-        });
-        if (folder === undefined) return undefined;
-        root = folder.at(0)?.fsPath;
-        await config.update("sourceRoot", root, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage("sourceRoot set to " + folder);
+        return undefined;
+        // let res = await vscode.window.showWarningMessage(
+        //     "Unable to fetch codebase: sourceRoot is not correctly set in settings",
+        //     "Pick root folder"
+        // );
+        // let folder = await vscode.window.showOpenDialog({
+        //     canSelectMany: false,
+        //     openLabel: "Select sourceRoot",
+        //     canSelectFiles: false,
+        //     canSelectFolders: true,
+        // });
+        // if (folder === undefined) return undefined;
+        // root = folder.at(0)?.fsPath;
+        // await config.update("sourceRoot", root, vscode.ConfigurationTarget.Global);
+        // vscode.window.showInformationMessage("sourceRoot set to " + folder);
     }
-    console.log(root);
     return root;
 }
 export async function dataRootGuard(): Promise<string | undefined> {
@@ -50,8 +50,8 @@ export async function dataRootGuard(): Promise<string | undefined> {
     let root = config.get("dataRoot") as string | undefined;
     if (root === undefined || !fs.existsSync(root)) {
         let res = await vscode.window.showWarningMessage(
-            "Unable to fetch activities: dataRoot is not correctly set in settings",
-            "Pick root folder"
+            "Unable to fetch data: dataRoot folder is not correctly set in settings",
+            "Pick data root folder"
         );
         let folder = await vscode.window.showOpenDialog({
             canSelectMany: false,
@@ -64,7 +64,6 @@ export async function dataRootGuard(): Promise<string | undefined> {
         await config.update("dataRoot", root, vscode.ConfigurationTarget.Global);
         vscode.window.showInformationMessage("dataRoot set to " + folder);
     }
-    console.log(root);
     return root;
 }
 

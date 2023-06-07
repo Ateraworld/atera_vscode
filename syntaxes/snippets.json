@@ -1,0 +1,9 @@
+{
+    "Add a mark": {
+        "prefix": "mrk",
+        "body": [
+            "\\${[${1:text}]${2:type}(${3:payload})}"
+        ],
+        "description": "Insert a mark"
+    }
+}
