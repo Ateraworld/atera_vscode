@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { RelationDataProvider } from "./providers/relation/relation_data_provider";
 import { cli } from "atera_admin_sdk/api/atera";
 import { CodeDataProvider } from "./providers/code/code_data_provider";
-
+import fs from "fs";
 export function activate(context: vscode.ExtensionContext) {
     const relationProvider = new RelationDataProvider();
     relationProvider.registerComands();
@@ -13,6 +13,11 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider(CodeDataProvider.id, codeProvider);
 
     cli.logger.enabled = false;
+    let config = vscode.workspace.getConfiguration("atera");
+    let root = config.get("dataRoot") as string | undefined;
+    if (root === undefined || !fs.existsSync(root)) {
+        vscode.window.showWarningMessage("Unable to fetch data: dataRoot folder is not correctly set in settings");
+    }
 }
 
 export function deactivate() {}
