@@ -1,7 +1,6 @@
-import * as atera from "atera_admin_sdk/api/atera";
 import fs from "fs";
 import path from "path";
-import { sourceRootGuard } from "../../common/utils";
+import { elementsInPath, sourceRootGuard } from "src/common/utils";
 
 export class CodeBaseAnalysis {
     info: [string, any][] = [];
@@ -15,12 +14,12 @@ export class CodeBaseAnalysis {
 }
 
 export async function analyzeCodeBase(): Promise<CodeBaseAnalysis> {
-    let root = await sourceRootGuard();
-    if (root === undefined) return new CodeBaseAnalysis();
+    let root = sourceRootGuard();
+    if (root === undefined) {return new CodeBaseAnalysis();}
     let errors: [string, any][] = [];
     let warnings: [string, any][] = [];
     let info: [string, any][] = [];
-    const sourceFiles = atera.path_ext.elementsInPath(path.join(root, "lib"), { recursive: true, filesOnly: true });
+    const sourceFiles = elementsInPath(path.join(root, "lib"), { recursive: true, filesOnly: true });
 
     for (const elem of sourceFiles) {
         if (fs.lstatSync(elem).isFile()) {
@@ -50,7 +49,7 @@ export async function analyzeCodeBase(): Promise<CodeBaseAnalysis> {
         }
     }
 
-    const androidFiles = atera.path_ext.elementsInPath(path.join(root, "android", "app"), {
+    const androidFiles = elementsInPath(path.join(root, "android", "app"), {
         recursive: true,
         filesOnly: true,
     });

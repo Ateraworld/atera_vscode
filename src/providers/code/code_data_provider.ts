@@ -1,6 +1,6 @@
-import { Item } from "../../common/item_param";
 import * as vscode from "vscode";
 import { CodeBaseAnalysis, analyzeCodeBase } from "./code_analyzer";
+import { Item } from "src/common/item_param";
 
 export class CodeDataProvider implements vscode.TreeDataProvider<Item> {
     static id: string = "code-provider";
@@ -45,7 +45,7 @@ export class CodeDataProvider implements vscode.TreeDataProvider<Item> {
                 }),
             ];
         }
-        if (this.analysis === undefined) return Promise.resolve([]);
+        if (this.analysis === undefined) {return Promise.resolve([]);}
         if (element.contextValue === "info") {
             return Promise.resolve(
                 this.analysis.info.map(

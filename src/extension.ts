@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { RelationDataProvider } from "./providers/relation/relation_data_provider";
-import { cli } from "atera_admin_sdk/api/atera";
 import { CodeDataProvider } from "./providers/code/code_data_provider";
 import fs from "fs";
 export function activate(context: vscode.ExtensionContext) {
@@ -12,7 +11,6 @@ export function activate(context: vscode.ExtensionContext) {
     codeProvider.registerComands();
     vscode.window.registerTreeDataProvider(CodeDataProvider.id, codeProvider);
 
-    cli.logger.enabled = false;
     let config = vscode.workspace.getConfiguration("atera");
     let root = config.get("dataRoot") as string | undefined;
     if (root === undefined || !fs.existsSync(root)) {

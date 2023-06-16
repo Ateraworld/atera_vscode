@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { computeAnalysis } from "./editor";
-import { readDefinitions } from "../../common/utils";
 import path from "path";
-import { Item } from "../../common/item_param";
+import { Item } from "src/common/item_param";
+import { readDefinitions } from "src/common/utils";
 import {
     addImage,
     addLocation,
@@ -41,7 +41,7 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
         readDefinitions().then((r) => (this.definitionsModel = r));
         const editor = vscode.window.activeTextEditor;
         if (editor) {
-            if (path.extname(editor.document.fileName) == ".json") {
+            if (path.extname(editor.document.fileName) === ".json") {
                 try {
                     this.analysisProblems = computeAnalysis(editor.document);
                 } catch (error) {
@@ -75,7 +75,9 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
 
     getChildren(element?: Item | undefined): vscode.ProviderResult<Item[]> {
         const editor = vscode.window.activeTextEditor;
-        if (!editor || path.extname(editor.document.fileName) != ".json") return Promise.resolve([]);
+        if (!editor || path.extname(editor.document.fileName) !== ".json") {
+            return Promise.resolve([]);
+        }
         let items: Item[] = [];
         try {
             let documentModel = JSON.parse(editor.document.getText());
@@ -202,7 +204,7 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                 let entries = Object.entries(documentModel.tags);
                 items.push(
                     ...entries.map((e) => {
-                        let match = tags.find((t) => t[0] == e[0]);
+                        let match = tags.find((t) => t[0] === e[0]);
                         let name = match !== undefined ? (match[1] as any).name : e[0];
                         let model = match !== undefined ? (match[1] as any) : {};
                         return new Item(e[0], "tag-instance", {

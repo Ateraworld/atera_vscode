@@ -1,10 +1,10 @@
 import fs from "fs";
-import { capitalize } from "./augmentation";
 import * as vscode from "vscode";
-import { elementsInPath } from "atera_admin_sdk/api/src/common/path_ext";
+import path from "path";
+import { capitalize } from "./augmentation";
 
 export function toWordCapitalized(str: string): string {
-    if (str.length <= 0) return str;
+    if (str.length <= 0) {return str;}
     let separator = " ";
     if (str.includes("_")) {
         separator = "_";
@@ -14,7 +14,7 @@ export function toWordCapitalized(str: string): string {
     let buf: string = "";
     for (let i = 0; i < tokens.length; i++) {
         var element = tokens[i];
-        if (element.replaceAll(separator, "").length <= 0) continue;
+        if (element.replaceAll(separator, "").length <= 0) {continue;}
         buf += capitalize(element);
         if (i < tokens.length - 1) {
             buf += " ";
@@ -23,7 +23,7 @@ export function toWordCapitalized(str: string): string {
 
     return buf;
 }
-export async function sourceRootGuard(): Promise<string | undefined> {
+export function sourceRootGuard(): string | undefined {
     let config = vscode.workspace.getConfiguration("atera");
     let root = config.get("sourceRoot") as string | undefined;
     if (root === undefined || !fs.existsSync(root)) {
@@ -31,7 +31,7 @@ export async function sourceRootGuard(): Promise<string | undefined> {
     }
     return root;
 }
-export async function dataRootGuard(): Promise<string | undefined> {
+export function dataRootGuard(): string | undefined {
     let config = vscode.workspace.getConfiguration("atera");
     let root = config.get("dataRoot") as string | undefined;
     if (root === undefined || !fs.existsSync(root)) {
@@ -41,8 +41,8 @@ export async function dataRootGuard(): Promise<string | undefined> {
 }
 
 export async function readDefinitions(): Promise<any | undefined> {
-    let root = await dataRootGuard();
-    if (root === undefined) return undefined;
+    let root = dataRootGuard();
+    if (root === undefined) {return undefined;}
     if (!fs.existsSync(`${root}/common/definitions.json`)) {
         return undefined;
     }
@@ -51,8 +51,8 @@ export async function readDefinitions(): Promise<any | undefined> {
 }
 
 export async function calculateLocations(): Promise<any | undefined> {
-    let root = await dataRootGuard();
-    if (root === undefined) return undefined;
+    let root = dataRootGuard();
+    if (root === undefined) {return undefined;}
     if (!fs.existsSync(`${root}/activities`)) {
         return undefined;
     }
@@ -87,10 +87,37 @@ export async function calculateLocations(): Promise<any | undefined> {
 
     return locations;
 }
-
+/**Get all elements in the provided path */
+export function elementsInPath(
+    src: string,
+    { recursive = false, filesOnly = false }: { recursive?: boolean; filesOnly?: boolean } = {}
+): string[] {
+    function _traverseDir(
+        dir: string,
+        items: string[],
+        { recursive = false, filesOnly = false }: { recursive?: boolean; filesOnly?: boolean } = {}
+    ) {
+        fs.readdirSync(dir).forEach((file) => {
+            let fullPath = path.join(dir, file);
+            if (fs.lstatSync(fullPath).isDirectory()) {
+                if (!filesOnly) {
+                    items.push(fullPath);
+                }
+                if (recursive) {
+                    _traverseDir(fullPath, items, { recursive: recursive, filesOnly: filesOnly });
+                }
+            } else {
+                items.push(fullPath);
+            }
+        });
+    }
+    let items: string[] = [];
+    _traverseDir(src, items, { recursive: recursive, filesOnly: filesOnly });
+    return items;
+}
 export async function readAvailableActivities(): Promise<[string, any][]> {
-    let root = await dataRootGuard();
-    if (root === undefined) return [];
+    let root = dataRootGuard();
+    if (root === undefined) {return [];}
     if (!fs.existsSync(`${root}/activities`)) {
         return [];
     }

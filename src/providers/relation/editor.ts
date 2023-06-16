@@ -1,10 +1,10 @@
+import { sanitizeActivityModel } from "src/common/activity";
 import * as vscode from "vscode";
-import * as atera from "atera_admin_sdk/api/atera";
 
 export function computeAnalysis(document: vscode.TextDocument): [string, any][] {
     let problems: [string, any][] = [];
     let model = JSON.parse(document.getText());
-    let results = atera.activity.sanitizeActivityModel(model, {
+    let results = sanitizeActivityModel(model, {
         fix: false,
     });
     for (const p of results[0]) {
@@ -26,7 +26,7 @@ export function computeAnalysis(document: vscode.TextDocument): [string, any][] 
 
 export async function overrideCurrentRelationModel(newModel: any): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-    if (editor == null) return;
+    if (editor == null) {return;}
     let cursorPosition = editor.selection.end;
     await editor.edit((editBuilder) => {
         editBuilder.replace(

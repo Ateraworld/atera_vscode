@@ -1,22 +1,23 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2022",
+        "allowSyntheticDefaultImports": true,
         "moduleResolution": "node",
-        "outDir": "out",
-        //"baseUrl": "./",
+        /* Language and Environment */
+        "target": "es2022",
+        "baseUrl": "./",
+        /* Modules */
+        "module": "commonjs",
+        "rootDir": "./",
         "resolveJsonModule": true,
-        //"lib": ["ES2020"],
-        "sourceMap": true,
-        //"rootDir": "src",
-        "paths": {
-            "src/*": ["./src/*"]
-        },
+        /* Emit */
+        "outDir": "out",
+
+        /* Interop Constraints */
         "esModuleInterop": true,
-        "strict": true /* enable all strict type-checking options */
-        /* Additional Checks */
-        // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-        // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-        // "noUnusedParameters": true,  /* Report errors on unused parameters. */
+        "forceConsistentCasingInFileNames": true,
+        /* Type Checking */
+        "strict": true,
+        /* Completeness */
+        "skipLibCheck": true
     }
 }

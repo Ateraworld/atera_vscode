@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { DescriptedQuickPickItem } from "../../common/descripted_quick_pick_item";
 import { insertTextAtCursor } from "./editor";
+import { DescriptedQuickPickItem } from "src/common/descripted_quick_pick_item";
 
 export interface MarkParameters {
     type?: string | undefined;
@@ -47,7 +47,7 @@ export async function compileMark({
                   ignoreFocusOut: true,
               })
             : selectedText;
-    if (text === undefined) return;
+    if (text === undefined) {return;}
     if (payload === undefined) {
         if (type === "pos") {
             let points = Object.entries(documentModel?.location.points);
@@ -56,7 +56,7 @@ export async function compileMark({
                     points.map((e) => new DescriptedQuickPickItem(e[0], (e[1] as any).description ?? "")),
                     { title: "Points", placeHolder: "select an existing point" }
                 );
-                if (pointName === undefined) return;
+                if (pointName === undefined) {return;}
                 payload = pointName?.label;
             }
         } else if (type === "ph") {

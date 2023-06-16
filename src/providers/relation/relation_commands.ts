@@ -1,17 +1,22 @@
 import * as vscode from "vscode";
 import fs from "fs";
-import * as atera from "atera_admin_sdk/api/atera";
 import { insertTextAtCursor, overrideCurrentRelationModel } from "./editor";
 import path from "path";
 import { compileMark } from "./marked_text_editor";
-import { capitalize } from "../../common/augmentation";
-import { DescriptedQuickPickItem } from "../../common/descripted_quick_pick_item";
-import { Item } from "../../common/item_param";
-import { readDefinitions, calculateLocations, toWordCapitalized, readAvailableActivities } from "../../common/utils";
+import { capitalize } from "src/common/augmentation";
+import { DescriptedQuickPickItem } from "src/common/descripted_quick_pick_item";
+import { Item } from "src/common/item_param";
+import {
+    readDefinitions,
+    elementsInPath,
+    calculateLocations,
+    toWordCapitalized,
+    readAvailableActivities,
+} from "src/common/utils";
 
 export async function addTag(): Promise<any> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+    if (!editor) {return;}
     let documentModel: any;
     let tags: [string, any][];
     try {
@@ -56,8 +61,8 @@ export async function addSection(): Promise<void> {
         placeHolder: "index of the section",
         validateInput: (val) => {
             let n = parseInt(val);
-            if (isNaN(n)) return "an integer is required";
-            if (n < 0) return "index must be greater than 0";
+            if (isNaN(n)) {return "an integer is required";}
+            if (n < 0) {return "index must be greater than 0";}
         },
         ignoreFocusOut: true,
     });
@@ -67,11 +72,11 @@ export async function addSection(): Promise<void> {
         title: "Title",
         placeHolder: "title of the section",
         validateInput: (val) => {
-            if (val.length <= 0) return "field is required";
+            if (val.length <= 0) {return "field is required";}
         },
         ignoreFocusOut: true,
     });
-    if (title === undefined) return;
+    if (title === undefined) {return;}
     title = capitalize(title);
     let sectionModel = { title: title, content: "" };
 
@@ -112,17 +117,17 @@ export async function addPoint(): Promise<void> {
         placeHolder: "identifier of the point",
         ignoreFocusOut: true,
     });
-    if (name === undefined || name.length <= 0) return;
+    if (name === undefined || name.length <= 0) {return;}
     let res = await vscode.window.showInputBox({
         title: "Latitude",
         placeHolder: "latitude in degrees",
         value: "",
         validateInput: (val) => {
-            if (isNaN(parseFloat(val))) return "a number is required";
+            if (isNaN(parseFloat(val))) {return "a number is required";}
         },
         ignoreFocusOut: true,
     });
-    if (res === undefined || isNaN(parseFloat(res))) return;
+    if (res === undefined || isNaN(parseFloat(res))) {return;}
     let lat = parseFloat(res.replaceAll(",", "."));
 
     res = await vscode.window.showInputBox({
@@ -130,11 +135,11 @@ export async function addPoint(): Promise<void> {
         placeHolder: "longitude in degrees",
         value: "",
         validateInput: (val) => {
-            if (isNaN(parseFloat(val))) return "a number is required";
+            if (isNaN(parseFloat(val))) {return "a number is required";}
         },
         ignoreFocusOut: true,
     });
-    if (res === undefined || isNaN(parseFloat(res))) return;
+    if (res === undefined || isNaN(parseFloat(res))) {return;}
     let long = parseFloat(res.replaceAll(",", "."));
 
     let description =
@@ -155,8 +160,8 @@ export async function addPoint(): Promise<void> {
         longitude: long,
     };
     console.log(documentModel.location.points[name]);
-    if (description.length > 0) documentModel.location.points[name].description = description;
-    if (mapLink === "true") documentModel.location.points[name].map_link = true;
+    if (description.length > 0) {documentModel.location.points[name].description = description;}
+    if (mapLink === "true") {documentModel.location.points[name].map_link = true;}
     overrideCurrentRelationModel(documentModel);
 }
 export async function addImage(): Promise<void> {
@@ -178,12 +183,12 @@ export async function addImage(): Promise<void> {
         placeHolder: "identifier of the image",
         validateInput: (val) => (val.length <= 0 ? "required" : undefined),
     });
-    if (name === undefined || name.length <= 0) return;
+    if (name === undefined || name.length <= 0) {return;}
     let type = await vscode.window.showQuickPick(["storage", "web", "local"], {
         title: "Select the type",
         placeHolder: "type of the marker",
     });
-    if (type === undefined) return;
+    if (type === undefined) {return;}
 
     let title =
         (await vscode.window.showInputBox({
@@ -198,8 +203,7 @@ export async function addImage(): Promise<void> {
         let storagePath = `${editor.document.fileName}/../storage`;
         console.log(storagePath);
         if (storagePath !== undefined && fs.existsSync(storagePath)) {
-            let images = atera.path_ext
-                .elementsInPath(storagePath)
+            let images = elementsInPath(storagePath)
                 .filter((e) => e.endsWith(".webp"))
                 .map((e) => path.parse(e).base);
 
@@ -217,9 +221,9 @@ export async function addImage(): Promise<void> {
         placeHolder: type === "storage" ? "insert only the name of the asset" : undefined,
         ignoreFocusOut: true,
     });
-    if (url === undefined) return;
+    if (url === undefined) {return;}
     if (type === "storage") {
-        if (documentModel.id === undefined) return;
+        if (documentModel.id === undefined) {return;}
         url = `activities/${documentModel.id}/${url}`;
     }
 
@@ -228,7 +232,7 @@ export async function addImage(): Promise<void> {
 }
 export async function uploadRelation(): Promise<any> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+    if (!editor) {return;}
     try {
         let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
         terminal ??= vscode.window.createTerminal("upload");
@@ -241,7 +245,7 @@ export async function uploadRelation(): Promise<any> {
 
 export async function setParams(): Promise<any> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+    if (!editor) {return;}
     try {
         let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
         terminal ??= vscode.window.createTerminal("params");
@@ -256,14 +260,14 @@ export async function setParams(): Promise<any> {
 
 export async function addLocation(item: Item): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+    if (!editor) {return;}
     let documentModel: any | undefined = undefined;
     try {
         documentModel = JSON.parse(editor.document.getText());
         let originalModel = JSON.parse(JSON.stringify(documentModel));
         let locations = await calculateLocations();
         console.log(locations);
-        if (locations === undefined) return;
+        if (locations === undefined) {return;}
         let res: string | undefined = undefined;
         let currentId: string | undefined = item?.label;
 
