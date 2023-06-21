@@ -13,10 +13,13 @@ import {
     toWordCapitalized,
     readAvailableActivities,
 } from "src/common/utils";
+import { sanitizeActivityModel } from "src/common/activity";
 
 export async function addTag(): Promise<any> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {return;}
+    if (!editor) {
+        return;
+    }
     let documentModel: any;
     let tags: [string, any][];
     try {
@@ -61,8 +64,12 @@ export async function addSection(): Promise<void> {
         placeHolder: "index of the section",
         validateInput: (val) => {
             let n = parseInt(val);
-            if (isNaN(n)) {return "an integer is required";}
-            if (n < 0) {return "index must be greater than 0";}
+            if (isNaN(n)) {
+                return "an integer is required";
+            }
+            if (n < 0) {
+                return "index must be greater than 0";
+            }
         },
         ignoreFocusOut: true,
     });
@@ -72,11 +79,15 @@ export async function addSection(): Promise<void> {
         title: "Title",
         placeHolder: "title of the section",
         validateInput: (val) => {
-            if (val.length <= 0) {return "field is required";}
+            if (val.length <= 0) {
+                return "field is required";
+            }
         },
         ignoreFocusOut: true,
     });
-    if (title === undefined) {return;}
+    if (title === undefined) {
+        return;
+    }
     title = capitalize(title);
     let sectionModel = { title: title, content: "" };
 
@@ -117,17 +128,23 @@ export async function addPoint(): Promise<void> {
         placeHolder: "identifier of the point",
         ignoreFocusOut: true,
     });
-    if (name === undefined || name.length <= 0) {return;}
+    if (name === undefined || name.length <= 0) {
+        return;
+    }
     let res = await vscode.window.showInputBox({
         title: "Latitude",
         placeHolder: "latitude in degrees",
         value: "",
         validateInput: (val) => {
-            if (isNaN(parseFloat(val))) {return "a number is required";}
+            if (isNaN(parseFloat(val))) {
+                return "a number is required";
+            }
         },
         ignoreFocusOut: true,
     });
-    if (res === undefined || isNaN(parseFloat(res))) {return;}
+    if (res === undefined || isNaN(parseFloat(res))) {
+        return;
+    }
     let lat = parseFloat(res.replaceAll(",", "."));
 
     res = await vscode.window.showInputBox({
@@ -135,11 +152,15 @@ export async function addPoint(): Promise<void> {
         placeHolder: "longitude in degrees",
         value: "",
         validateInput: (val) => {
-            if (isNaN(parseFloat(val))) {return "a number is required";}
+            if (isNaN(parseFloat(val))) {
+                return "a number is required";
+            }
         },
         ignoreFocusOut: true,
     });
-    if (res === undefined || isNaN(parseFloat(res))) {return;}
+    if (res === undefined || isNaN(parseFloat(res))) {
+        return;
+    }
     let long = parseFloat(res.replaceAll(",", "."));
 
     let description =
@@ -160,10 +181,15 @@ export async function addPoint(): Promise<void> {
         longitude: long,
     };
     console.log(documentModel.location.points[name]);
-    if (description.length > 0) {documentModel.location.points[name].description = description;}
-    if (mapLink === "true") {documentModel.location.points[name].map_link = true;}
+    if (description.length > 0) {
+        documentModel.location.points[name].description = description;
+    }
+    if (mapLink === "true") {
+        documentModel.location.points[name].map_link = true;
+    }
     overrideCurrentRelationModel(documentModel);
 }
+
 export async function addImage(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -183,12 +209,16 @@ export async function addImage(): Promise<void> {
         placeHolder: "identifier of the image",
         validateInput: (val) => (val.length <= 0 ? "required" : undefined),
     });
-    if (name === undefined || name.length <= 0) {return;}
+    if (name === undefined || name.length <= 0) {
+        return;
+    }
     let type = await vscode.window.showQuickPick(["storage", "web", "local"], {
         title: "Select the type",
         placeHolder: "type of the marker",
     });
-    if (type === undefined) {return;}
+    if (type === undefined) {
+        return;
+    }
 
     let title =
         (await vscode.window.showInputBox({
@@ -221,37 +251,29 @@ export async function addImage(): Promise<void> {
         placeHolder: type === "storage" ? "insert only the name of the asset" : undefined,
         ignoreFocusOut: true,
     });
-    if (url === undefined) {return;}
+    if (url === undefined) {
+        return;
+    }
     if (type === "storage") {
-        if (documentModel.id === undefined) {return;}
+        if (documentModel.id === undefined) {
+            return;
+        }
         url = `activities/${documentModel.id}/${url}`;
     }
 
     documentModel.images[name] = { title: title, url: url, type: type };
     overrideCurrentRelationModel(documentModel);
 }
+
 export async function uploadRelation(): Promise<any> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {return;}
-    try {
-        let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
-        terminal ??= vscode.window.createTerminal("upload");
-        terminal?.sendText("atera activity upload " + path.basename(path.dirname(editor.document.fileName)), false);
-        terminal?.show();
-    } catch (error) {
-        vscode.window.showWarningMessage(error!.toString());
+    if (!editor) {
+        return;
     }
-}
-
-export async function setParams(): Promise<any> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {return;}
     try {
-        let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
-        terminal ??= vscode.window.createTerminal("params");
-        terminal?.sendText(
-            "atera activity set_params " + path.basename(path.dirname(editor.document.fileName)) + " --adjust-metrics"
-        );
+        let terminal: vscode.Terminal | undefined = vscode.window.terminals.find((t) => t.name === "atera_cmd");
+        terminal ??= vscode.window.createTerminal("atera_cmd");
+        terminal?.sendText("atera activity upload " + path.basename(path.dirname(editor.document.fileName)), false);
         terminal?.show();
     } catch (error) {
         vscode.window.showWarningMessage(error!.toString());
@@ -260,14 +282,18 @@ export async function setParams(): Promise<any> {
 
 export async function addLocation(item: Item): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {return;}
+    if (!editor) {
+        return;
+    }
     let documentModel: any | undefined = undefined;
     try {
         documentModel = JSON.parse(editor.document.getText());
         let originalModel = JSON.parse(JSON.stringify(documentModel));
         let locations = await calculateLocations();
         console.log(locations);
-        if (locations === undefined) {return;}
+        if (locations === undefined) {
+            return;
+        }
         let res: string | undefined = undefined;
         let currentId: string | undefined = item?.label;
 
@@ -390,25 +416,21 @@ export async function sanitizeRelation(): Promise<void> {
     }
     await editor.document.save();
     try {
-        let terminal: vscode.Terminal | undefined = vscode.window.activeTerminal;
-        terminal ??= vscode.window.createTerminal("sanitize");
-        terminal?.sendText("atera activity sanitize " + path.basename(path.dirname(editor.document.fileName)));
-        terminal?.show();
-
-        // let model = JSON.parse(editor.document.getText());
-        // let results = atera.activity.sanitizeActivityModel(model, { fix: true });
-        // await overrideCurrentRelationModel(model);
-        // if (results[0].length <= 0) {
-        //     vscode.window.showInformationMessage(
-        //         "Activity sanitized" + (results[1].length > 0 ? " with warnings" : "")
-        //     );
-        // } else {
-        //     vscode.window.showErrorMessage("Activity is not sanitized\n● " + results[0].join(" ● "));
-        // }
+        let model = JSON.parse(editor.document.getText());
+        let results = sanitizeActivityModel(model, { fix: true });
+        await overrideCurrentRelationModel(model);
+        if (results[0].length <= 0) {
+            vscode.window.showInformationMessage(
+                "Activity sanitized" + (results[1].length > 0 ? " with warnings" : "")
+            );
+        } else {
+            vscode.window.showErrorMessage("Activity is not sanitized, check the analysis panel for information");
+        }
     } catch (error) {
         vscode.window.showWarningMessage(error!.toString());
     }
 }
+
 export async function addMark(item: Item | undefined): Promise<void> {
     console.log("addmark");
     if (item === undefined) {

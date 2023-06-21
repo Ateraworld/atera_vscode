@@ -31,7 +31,9 @@ export function isActivityFolderValid(folder: string): string | undefined {
     }
 }
 export function readExistingActivitiesInPath(path: string): [string, any][] {
-    if (path === undefined || !fs.existsSync(path)) {return [];}
+    if (path === undefined || !fs.existsSync(path)) {
+        return [];
+    }
     let results: [string, any][] = [];
     let res = elementsInPath(path, { recursive: false, filesOnly: false }).filter(
         (e) => isActivityFolderValid(e) === undefined
@@ -48,7 +50,9 @@ export function readExistingActivitiesInPath(path: string): [string, any][] {
 export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boolean } = {}): [string[], string[]] {
     try {
         let dataRoot = dataRootGuard();
-        if (dataRoot === undefined) {return [[], []];}
+        if (dataRoot === undefined) {
+            return [[], []];
+        }
         // * format description
         let logs: string[] = [];
         let problems: string[] = [];
@@ -61,13 +65,17 @@ export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boole
         let points = Object.entries(model.location.points ?? {});
         let tags = Object.entries(model.tags ?? {});
         let existingActivities =
-            dataRoot !== undefined ? readExistingActivitiesInPath(dataRoot!).map((e) => e[1].id) : undefined;
+            dataRoot !== undefined
+                ? readExistingActivitiesInPath(path.join(dataRoot, "activities")).map((e) => e[1].id)
+                : undefined;
         for (var [key, value] of sanitizedSections.entries()) {
             // space format
             value.content = formatActivityModelString(value.content, { fix: fix, logs: logs });
             sanitizedSections.set(key, value);
             let matches = (value.content as String).matchAll(markedTextRegExp);
-            if (matches == null) {continue;}
+            if (matches == null) {
+                continue;
+            }
             for (const m of matches) {
                 let id = m.groups?.id;
                 let payload = m.groups?.payload;

@@ -13,7 +13,6 @@ import {
     addTag,
     removeRelationItem,
     sanitizeRelation,
-    setParams,
     uploadRelation,
 } from "./relation_commands";
 
@@ -58,7 +57,6 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
         vscode.commands.registerCommand("relation-provider.addSection", () => addSection());
         vscode.commands.registerCommand("relation-provider.addImage", () => addImage());
         vscode.commands.registerCommand("relation-provider.addTag", () => addTag());
-        vscode.commands.registerCommand("relation-provider.setParams", () => setParams());
         vscode.commands.registerCommand("relation-provider.addLocation", (item: Item) => addLocation(item));
         vscode.commands.registerCommand("relation-provider.addMark", (item: Item | undefined) => addMark(item));
         vscode.commands.registerCommand("relation-provider.sanitizeRelation", () => sanitizeRelation());

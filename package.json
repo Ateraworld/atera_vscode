@@ -83,11 +83,6 @@
           "command": "relation-provider.sanitizeRelation",
           "when": "view == relation-provider",
           "group": "navigation"
-        },
-        {
-          "command": "relation-provider.setParams",
-          "when": "view == relation-provider",
-          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -165,11 +160,6 @@
         "icon": "$(diff-added)"
       },
       {
-        "command": "relation-provider.setParams",
-        "title": "Atera: Set Params",
-        "icon": "$(graph)"
-      },
-      {
         "command": "relation-provider.addSymbol",
         "title": "Atera: Add Symbol",
         "icon": "$(insert)"
@@ -220,12 +210,12 @@
         "atera.dataRoot": {
           "type": "string",
           "default": "",
-          "markdownDescription": "The **root** folder of the SDK data.\n\nIf specified, allows more advanced utilities such as graphical selection of activities references in relations and more.\n\nConsidering the **SDK** structure, this path should point at `%atera_admin_sdk%/data`"
+          "markdownDescription": "The **root** folder of the SDK data.\n\nIf specified, allows more advanced utilities such as graphical selection of activities references in relations and more."
         },
         "atera.sourceRoot": {
           "type": "string",
           "default": "",
-          "markdownDescription": "The **root** folder of the Atera source repository.\n\nIf specified, allows dynamic code base analysis and problem detection.\n\nConsidering the Atera structure, this path should point at `%atera%`"
+          "markdownDescription": "The **root** folder of the Atera source repository.\n\nIf specified, allows dynamic code base analysis and problem detection."
         }
       }
     }
