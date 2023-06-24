@@ -20,7 +20,7 @@ export class Item extends vscode.TreeItem {
         super(label, collapsibleState);
         this.label = label;
         this.description = description;
-        this.tooltip = tooltip;
+        this.tooltip = tooltip ?? description;
         this.itemModel = itemModel;
         this.command = command !== undefined ? ({ command: command, arguments: [this] } as vscode.Command) : undefined;
         this.iconPath = icon;

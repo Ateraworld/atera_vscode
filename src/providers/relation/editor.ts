@@ -8,10 +8,10 @@ export function computeAnalysis(document: vscode.TextDocument): [string, any][] 
         fix: false,
     });
     for (const p of results[0]) {
-        problems.push([p, { description: p, icon: "error" }]);
+        problems.push([p, { description: p, icon: "error", color: "charts.red" }]);
     }
     for (const p of results[1]) {
-        problems.push([p, { description: p, icon: "warning" }]);
+        problems.push([p, { description: p, icon: "warning", color: "charts.yellow" }]);
     }
     problems.sort((a, b) => {
         let priorities: any = {
@@ -26,7 +26,9 @@ export function computeAnalysis(document: vscode.TextDocument): [string, any][] 
 
 export async function overrideCurrentRelationModel(newModel: any): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-    if (editor == null) {return;}
+    if (editor == null) {
+        return;
+    }
     let cursorPosition = editor.selection.end;
     await editor.edit((editBuilder) => {
         editBuilder.replace(

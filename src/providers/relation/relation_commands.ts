@@ -9,9 +9,9 @@ import { Item } from "src/common/item_param";
 import {
     readDefinitions,
     elementsInPath,
-    calculateLocations,
+    computeLocations,
     toWordCapitalized,
-    readAvailableActivities,
+    readExistingActivities,
 } from "src/common/utils";
 import { sanitizeActivityModel } from "src/common/activity";
 
@@ -265,19 +265,14 @@ export async function addImage(): Promise<void> {
     overrideCurrentRelationModel(documentModel);
 }
 
-export async function uploadRelation(): Promise<any> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        return;
-    }
-    try {
-        let terminal: vscode.Terminal | undefined = vscode.window.terminals.find((t) => t.name === "atera_cmd");
-        terminal ??= vscode.window.createTerminal("atera_cmd");
-        terminal?.sendText("atera activity upload " + path.basename(path.dirname(editor.document.fileName)), false);
-        terminal?.show();
-    } catch (error) {
-        vscode.window.showWarningMessage(error!.toString());
-    }
+export async function listActivities(): Promise<void> {
+    var acts = await readExistingActivities();
+    let actId = await vscode.window.showQuickPick(
+        acts.map((e) => new DescriptedQuickPickItem(e[1].name ?? "", e[0])),
+        { title: "Activities", placeHolder: "select an existing activity" }
+    );
+    if (actId === undefined || actId.description === undefined) return;
+    await insertTextAtCursor(actId.description);
 }
 
 export async function addLocation(item: Item): Promise<void> {
@@ -288,8 +283,8 @@ export async function addLocation(item: Item): Promise<void> {
     let documentModel: any | undefined = undefined;
     try {
         documentModel = JSON.parse(editor.document.getText());
-        let originalModel = JSON.parse(JSON.stringify(documentModel));
-        let locations = await calculateLocations();
+        let originalModel = JSON.parse(editor.document.getText());
+        let locations = await computeLocations();
         console.log(locations);
         if (locations === undefined) {
             return;
@@ -351,7 +346,8 @@ export async function addLocation(item: Item): Promise<void> {
             }
         }
         overrideCurrentRelationModel(documentModel);
-    } catch (_) {
+    } catch (error) {
+        console.log(error);
         return;
     }
 }
@@ -408,29 +404,6 @@ export async function removeRelationItem(item: Item): Promise<void> {
     }
 }
 
-export async function sanitizeRelation(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        vscode.window.showWarningMessage("Editor not valid");
-        return;
-    }
-    await editor.document.save();
-    try {
-        let model = JSON.parse(editor.document.getText());
-        let results = sanitizeActivityModel(model, { fix: true });
-        await overrideCurrentRelationModel(model);
-        if (results[0].length <= 0) {
-            vscode.window.showInformationMessage(
-                "Activity sanitized" + (results[1].length > 0 ? " with warnings" : "")
-            );
-        } else {
-            vscode.window.showErrorMessage("Activity is not sanitized, check the analysis panel for information");
-        }
-    } catch (error) {
-        vscode.window.showWarningMessage(error!.toString());
-    }
-}
-
 export async function addMark(item: Item | undefined): Promise<void> {
     console.log("addmark");
     if (item === undefined) {
@@ -451,7 +424,7 @@ export async function addMark(item: Item | undefined): Promise<void> {
             await compileMark({ type: "i" });
             break;
         case "editor-act-ref":
-            let availableActivities = await readAvailableActivities();
+            let availableActivities = await readExistingActivities();
             await compileMark({ type: "act", preloadedElements: availableActivities });
             break;
         default:

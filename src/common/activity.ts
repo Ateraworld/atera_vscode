@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { elementsInPath, dataRootGuard } from "./utils";
+import { elementsInPath, getDataRoot } from "./utils";
 
 export const attestationPeriodRegExp = new RegExp(
     "^(?<startd>0?[1-9]|[12][0-9]|3[01])-(?<startm>0?[1-9]|1[0-2])/(?<endd>0?[1-9]|[12][0-9]|3[01])-(?<endm>0?[1-9]|1[0-2])$"
@@ -49,7 +49,7 @@ export function readExistingActivitiesInPath(path: string): [string, any][] {
 
 export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boolean } = {}): [string[], string[]] {
     try {
-        let dataRoot = dataRootGuard();
+        let dataRoot = getDataRoot();
         if (dataRoot === undefined) {
             return [[], []];
         }
@@ -60,7 +60,7 @@ export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boole
         model.description = formatActivityModelString(model.description, { fix: fix, logs: logs });
 
         // * format relation sections
-        let sanitizedSections = new Map<String, any>(Object.entries(model.relation.sections ?? {}));
+        let sanitizedSections = new Map<String, any>(Object.entries(model.relation?.sections ?? {}));
         let images: [string, any][] = Object.entries(model.images ?? {});
         let points = Object.entries(model.location.points ?? {});
         let tags = Object.entries(model.tags ?? {});
@@ -104,17 +104,10 @@ export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boole
                 warnings.push(value.title + ": empty section");
             }
         }
-        model.relation.sections = Object.fromEntries(sanitizedSections);
-
-        if (
-            !(
-                model.attestation.period == null ||
-                model.attestation.period === "" ||
-                attestationPeriodRegExp.test(model.attestation.period)
-            )
-        ) {
-            problems.push("attestation period not formatted");
+        if (model.relation != null) {
+            model.relation.sections = Object.fromEntries(sanitizedSections);
         }
+
         if (model.location.country == null || model.location.country.length <= 0) {
             problems.push("location.country is not compiled");
         }
@@ -133,16 +126,37 @@ export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boole
                 problems.push(k + " coodinates are not set");
             }
         }
-        if (model.attestation == null) {
-            problems.push("attestation coodinates are not set");
-        } else {
-            let val = model.attestation as any;
-            if (val.longitude == null || val.longitude === 0 || val.latitude == null || val.latitude === 0) {
+        if (model.attestation != null) {
+            let attestation = model.attestation as any;
+            if (
+                attestation.longitude == null ||
+                attestation.longitude === 0 ||
+                attestation.latitude == null ||
+                attestation.latitude === 0
+            ) {
                 problems.push("attestation coodinates are not set");
+            }
+            if (attestation.enabled ?? true) {
+                if (
+                    !(
+                        attestation.period == null ||
+                        attestation.period === "" ||
+                        attestationPeriodRegExp.test(attestation.period)
+                    )
+                ) {
+                    problems.push("attestation period not formatted");
+                }
+
+                if (attestation.tokens == null || attestation.tokens <= 0) {
+                    warnings.push("tokens: value is missing");
+                }
+                if (attestation.rank == null || attestation.rank <= 0) {
+                    warnings.push("rank: value is missing");
+                }
             }
         }
 
-        if (!points.find((p) => p[0].includes("parcheggio"))) {
+        if (!points.find((p) => p[0].includes("parcheggio")) && model.category !== "2") {
             warnings.push("parking: point is missing");
         }
         if (model.category === "0") {
@@ -153,12 +167,7 @@ export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boole
                 warnings.push("stacco: point is missing");
             }
         }
-        if (model.attestation.tokens == null || model.attestation.tokens <= 0) {
-            warnings.push("tokens: value is missing");
-        }
-        if (model.attestation.rank == null || model.attestation.rank <= 0) {
-            warnings.push("rank: value is missing");
-        }
+
         let storedTags = Object.entries(
             JSON.parse(fs.readFileSync(path.join(dataRoot, "common", "definitions.json")).toString()).tags
         );
@@ -179,9 +188,10 @@ export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boole
  * @returns a tuple: `[hasEncounteredErrors, formattedModelString]`
  */
 function formatActivityModelString(
-    str: string,
+    str: string | undefined,
     { fix = false, logs = [] }: { fix?: boolean; logs?: string[] } = {}
-): string {
+): string | undefined {
+    if (str == undefined) return undefined;
     let reg = new RegExp("[ ]+\\n[ ]+|\\n[ ]+|[ ]+\\n", "g");
     if (fix) {
         str = str.replace(reg, "\n");

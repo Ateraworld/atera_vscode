@@ -3,7 +3,7 @@
   "displayName": "Atera",
   "description": "The official Atera vscode extension",
   "icon": "assets/logo_4k.png",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": {
     "name": "Ateraworld",
     "email": "atera.world@gmail.com",
@@ -21,6 +21,26 @@
   ],
   "main": "./out/src/extension.js",
   "contributes": {
+    "colors": [
+      {
+        "id": "atera.red",
+        "description": "Red highlight color",
+        "defaults": {
+          "dark": "#F0335F",
+          "light": "#F0335F",
+          "highContrast": "errorForeground"
+        }
+      },
+      {
+        "id": "atera.blue",
+        "description": "Blue highlight color",
+        "defaults": {
+          "dark": "#A0E1FF",
+          "light": "#212D3A",
+          "highContrast": "errorForeground"
+        }
+      }
+    ],
     "snippets": [
       {
         "language": "atera",
@@ -70,17 +90,12 @@
           "group": "navigation"
         },
         {
+          "command": "relation-provider.listActivities",
+          "when": "view ==  relation-provider",
+          "group": "navigation"
+        },
+        {
           "command": "relation-provider.refresh",
-          "when": "view == relation-provider",
-          "group": "navigation"
-        },
-        {
-          "command": "relation-provider.uploadRelation",
-          "when": "view == relation-provider",
-          "group": "navigation"
-        },
-        {
-          "command": "relation-provider.sanitizeRelation",
           "when": "view == relation-provider",
           "group": "navigation"
         }
@@ -145,9 +160,9 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "relation-provider.uploadRelation",
-        "title": "Atera: Upload Relation",
-        "icon": "$(cloud-upload)"
+        "command": "relation-provider.listActivities",
+        "title": "Atera: List Activities",
+        "icon": "$(list-tree)"
       },
       {
         "command": "relation-provider.addLocation",
@@ -193,11 +208,6 @@
         "command": "relation-provider.addMark",
         "title": "Atera: Add Mark",
         "icon": "$(insert)"
-      },
-      {
-        "command": "relation-provider.sanitizeRelation",
-        "title": "Atera: Sanitize Relation",
-        "icon": "$(sparkle)"
       }
     ],
     "activationEvents": [

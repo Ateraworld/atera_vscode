@@ -4,7 +4,9 @@ import path from "path";
 import { capitalize } from "./augmentation";
 
 export function toWordCapitalized(str: string): string {
-    if (str.length <= 0) {return str;}
+    if (str.length <= 0) {
+        return str;
+    }
     let separator = " ";
     if (str.includes("_")) {
         separator = "_";
@@ -14,7 +16,9 @@ export function toWordCapitalized(str: string): string {
     let buf: string = "";
     for (let i = 0; i < tokens.length; i++) {
         var element = tokens[i];
-        if (element.replaceAll(separator, "").length <= 0) {continue;}
+        if (element.replaceAll(separator, "").length <= 0) {
+            continue;
+        }
         buf += capitalize(element);
         if (i < tokens.length - 1) {
             buf += " ";
@@ -31,7 +35,7 @@ export function sourceRootGuard(): string | undefined {
     }
     return root;
 }
-export function dataRootGuard(): string | undefined {
+export function getDataRoot(): string | undefined {
     let config = vscode.workspace.getConfiguration("atera");
     let root = config.get("dataRoot") as string | undefined;
     if (root === undefined || !fs.existsSync(root)) {
@@ -41,8 +45,10 @@ export function dataRootGuard(): string | undefined {
 }
 
 export async function readDefinitions(): Promise<any | undefined> {
-    let root = dataRootGuard();
-    if (root === undefined) {return undefined;}
+    let root = getDataRoot();
+    if (root === undefined) {
+        return undefined;
+    }
     if (!fs.existsSync(`${root}/common/definitions.json`)) {
         return undefined;
     }
@@ -50,41 +56,38 @@ export async function readDefinitions(): Promise<any | undefined> {
     return model;
 }
 
-export async function calculateLocations(): Promise<any | undefined> {
-    let root = dataRootGuard();
-    if (root === undefined) {return undefined;}
+export async function computeLocations(): Promise<any | undefined> {
+    let root = getDataRoot();
+    if (root === undefined) {
+        return undefined;
+    }
     if (!fs.existsSync(`${root}/activities`)) {
         return undefined;
     }
 
     let locations: any = {};
-
-    elementsInPath(`${root}/activities`)
-        .filter((e) => fs.lstatSync(e).isDirectory())
-        .forEach((f) => {
-            let elements = elementsInPath(f);
-            let modelPath = elements.find((e) => e.split(".").pop() == "json");
-            let model = JSON.parse(fs.readFileSync(modelPath!, "utf-8"));
-            let country = model.location.country;
-            let region = model.location.region;
-            let province = model.location.province;
-            let zone = model.location.zone;
-            if (country != undefined) {
-                locations[country] ??= {};
-                locations[country]["regions"] ??= {};
-                if (region != undefined) {
-                    locations[country]["regions"][region] ??= {};
-                    if (province != undefined) {
-                        locations[country]["regions"][region][province] = true;
-                    }
-                }
-                if (zone != undefined) {
-                    locations[country]["zones"] ??= {};
-                    locations[country]["zones"][zone] = true;
+    let acts = await readExistingActivities();
+    for (const a of acts) {
+        let model = a[1];
+        let country = model.location.country;
+        let region = model.location.region;
+        let province = model.location.province;
+        let zone = model.location.zone;
+        if (country != undefined) {
+            locations[country] ??= {};
+            locations[country]["regions"] ??= {};
+            if (region != undefined) {
+                locations[country]["regions"][region] ??= {};
+                if (province != undefined) {
+                    locations[country]["regions"][region][province] = true;
                 }
             }
-        });
-
+            if (zone != undefined) {
+                locations[country]["zones"] ??= {};
+                locations[country]["zones"][zone] = true;
+            }
+        }
+    }
     return locations;
 }
 /**Get all elements in the provided path */
@@ -115,9 +118,11 @@ export function elementsInPath(
     _traverseDir(src, items, { recursive: recursive, filesOnly: filesOnly });
     return items;
 }
-export async function readAvailableActivities(): Promise<[string, any][]> {
-    let root = dataRootGuard();
-    if (root === undefined) {return [];}
+export async function readExistingActivities(): Promise<[string, any][]> {
+    let root = getDataRoot();
+    if (root === undefined) {
+        return [];
+    }
     if (!fs.existsSync(`${root}/activities`)) {
         return [];
     }

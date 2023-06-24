@@ -11,9 +11,8 @@ import {
     addSection,
     addSymbol,
     addTag,
+    listActivities,
     removeRelationItem,
-    sanitizeRelation,
-    uploadRelation,
 } from "./relation_commands";
 
 export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
@@ -58,10 +57,9 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
         vscode.commands.registerCommand("relation-provider.addImage", () => addImage());
         vscode.commands.registerCommand("relation-provider.addTag", () => addTag());
         vscode.commands.registerCommand("relation-provider.addLocation", (item: Item) => addLocation(item));
+        vscode.commands.registerCommand("relation-provider.listActivities", () => listActivities());
         vscode.commands.registerCommand("relation-provider.addMark", (item: Item | undefined) => addMark(item));
-        vscode.commands.registerCommand("relation-provider.sanitizeRelation", () => sanitizeRelation());
         vscode.commands.registerCommand("relation-provider.addSymbol", () => addSymbol());
-        vscode.commands.registerCommand("relation-provider.uploadRelation", () => uploadRelation());
         vscode.commands.registerCommand("relation-provider.removeRelationItem", (item: Item) =>
             removeRelationItem(item)
         );
@@ -83,15 +81,15 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                 return [
                     new Item("Analysis", "analysis", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                        icon: new vscode.ThemeIcon("search"),
+                        icon: new vscode.ThemeIcon("search", new vscode.ThemeColor("charts.blue")),
                     }),
                     new Item("Editor", "editor", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                        icon: new vscode.ThemeIcon("edit"),
+                        icon: new vscode.ThemeIcon("edit", new vscode.ThemeColor("charts.blue")),
                     }),
                     new Item("Overview", "overview", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                        icon: new vscode.ThemeIcon("symbol-structure"),
+                        icon: new vscode.ThemeIcon("preview", new vscode.ThemeColor("charts.blue")),
                     }),
                 ];
             }
@@ -104,40 +102,67 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                                 description: t[1].description,
                                 itemModel: t[1],
                                 tooltip: t[1].description,
-                                icon: new vscode.ThemeIcon(t[1].icon),
+                                icon: new vscode.ThemeIcon(t[1].icon, new vscode.ThemeColor(t[1].color)),
                             })
                     )
                 );
-                return Promise.resolve(items);
             } else if (element.contextValue === "overview") {
-                return Promise.resolve([
-                    new Item("Tokens", "tokens", {
-                        description: documentModel.attestation?.tokens?.toString(),
+                items.push(
+                    new Item(this.definitionsModel.categories[documentModel.category].name, "category", {
+                        description: documentModel.category,
                         collapsibleState: vscode.TreeItemCollapsibleState.None,
-                        icon: new vscode.ThemeIcon("circle-large"),
-                    }),
-                    new Item("Rank", "rank", {
-                        collapsibleState: vscode.TreeItemCollapsibleState.None,
-                        description: documentModel.attestation?.rank?.toString(),
-                        icon: new vscode.ThemeIcon("star-full"),
-                    }),
-                    new Item("Location", "location", {
-                        collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                        icon: new vscode.ThemeIcon("map"),
-                    }),
-                    new Item("Images", "images", {
-                        collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                        icon: new vscode.ThemeIcon("device-camera"),
-                    }),
-                    new Item("Sections", "sections", {
-                        collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                        icon: new vscode.ThemeIcon("bookmark"),
-                    }),
-                    new Item("Tags", "tags", {
-                        collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
-                        icon: new vscode.ThemeIcon("tag"),
-                    }),
-                ]);
+                    })
+                );
+
+                if (documentModel.attestation != null && (documentModel.attestation.enabled ?? true)) {
+                    items.push(
+                        ...[
+                            new Item("Tokens", "tokens", {
+                                description: documentModel.attestation?.tokens?.toString(),
+                                collapsibleState: vscode.TreeItemCollapsibleState.None,
+                                icon: new vscode.ThemeIcon("circle-large", new vscode.ThemeColor("atera.blue")),
+                            }),
+                            new Item("Rank", "rank", {
+                                collapsibleState: vscode.TreeItemCollapsibleState.None,
+                                description: documentModel.attestation?.rank?.toString(),
+                                icon: new vscode.ThemeIcon("star-full", new vscode.ThemeColor("atera.red")),
+                            }),
+                        ]
+                    );
+                }
+                items.push(
+                    ...[
+                        new Item("Location", "location", {
+                            collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+                            icon: new vscode.ThemeIcon("map"),
+                        }),
+                        new Item("Images", "images", {
+                            collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+                            icon: new vscode.ThemeIcon("device-camera"),
+                        }),
+                    ]
+                );
+
+                if (documentModel?.relation?.sections != null) {
+                    items.push(
+                        ...[
+                            new Item("Sections", "sections", {
+                                collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+                                icon: new vscode.ThemeIcon("bookmark"),
+                            }),
+                        ]
+                    );
+                }
+                if (documentModel.tags != null) {
+                    items.push(
+                        ...[
+                            new Item("Tags", "tags", {
+                                collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+                                icon: new vscode.ThemeIcon("tag"),
+                            }),
+                        ]
+                    );
+                }
             } else if (element.contextValue === "points") {
                 let entries = Object.entries(documentModel.location.points);
                 items.push(
@@ -151,7 +176,6 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                             })
                     )
                 );
-                return Promise.resolve(items);
             } else if (element.contextValue === "images") {
                 let entries = Object.entries(documentModel.images);
                 items.push(
@@ -166,7 +190,6 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                             })
                     )
                 );
-                return Promise.resolve(items);
             } else if (element.contextValue === "sections") {
                 let entries = Object.entries(documentModel.relation.sections);
                 items.push(
@@ -196,7 +219,6 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                             })
                     )
                 );
-                return Promise.resolve(items);
             } else if (element.contextValue === "tags") {
                 let tags = Object.entries(this.definitionsModel.tags);
                 let entries = Object.entries(documentModel.tags);
@@ -213,34 +235,33 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                         });
                     })
                 );
-                return Promise.resolve(items);
             } else if (element.contextValue === "editor") {
                 items.push(
                     ...[
                         new Item("Bold", "editor-bold", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
-                            icon: new vscode.ThemeIcon("bold"),
+                            icon: new vscode.ThemeIcon("bold", new vscode.ThemeColor("charts.lines")),
                             command: "relation-provider.addMark",
                         }),
                         new Item("Italic", "editor-italic", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
-                            icon: new vscode.ThemeIcon("italic"),
+                            icon: new vscode.ThemeIcon("italic", new vscode.ThemeColor("charts.lines")),
                             command: "relation-provider.addMark",
                         }),
                         new Item("Activity Reference", "editor-act-ref", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
-                            icon: new vscode.ThemeIcon("link"),
+                            icon: new vscode.ThemeIcon("link", new vscode.ThemeColor("charts.lines")),
                             command: "relation-provider.addMark",
                         }),
                         new Item("Symbol", "editor-symbol", {
                             collapsibleState: vscode.TreeItemCollapsibleState.None,
-                            icon: new vscode.ThemeIcon("symbol-parameter"),
+                            icon: new vscode.ThemeIcon("symbol-parameter", new vscode.ThemeColor("charts.lines")),
                             command: "relation-provider.addSymbol",
                         }),
                     ]
                 );
-                return Promise.resolve(items);
             }
+            return Promise.resolve(items);
         } catch (error) {
             return Promise.resolve([
                 ...items,
