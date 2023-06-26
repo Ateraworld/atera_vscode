@@ -1,6 +1,6 @@
 import fs from "fs";
-import * as vscode from "vscode";
 import path from "path";
+import * as vscode from "vscode";
 import { capitalize } from "./augmentation";
 
 export function toWordCapitalized(str: string): string {
@@ -27,14 +27,7 @@ export function toWordCapitalized(str: string): string {
 
     return buf;
 }
-export function sourceRootGuard(): string | undefined {
-    let config = vscode.workspace.getConfiguration("atera");
-    let root = config.get("sourceRoot") as string | undefined;
-    if (root === undefined || !fs.existsSync(root)) {
-        return undefined;
-    }
-    return root;
-}
+
 export function getDataRoot(): string | undefined {
     let config = vscode.workspace.getConfiguration("atera");
     let root = config.get("dataRoot") as string | undefined;

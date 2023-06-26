@@ -3,7 +3,7 @@
   "displayName": "Atera",
   "description": "The official Atera vscode extension",
   "icon": "assets/logo_4k.png",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "author": {
     "name": "Ateraworld",
     "email": "atera.world@gmail.com",
@@ -85,8 +85,8 @@
       ],
       "view/title": [
         {
-          "command": "code-provider.refresh",
-          "when": "view == code-provider",
+          "command": "relation-provider.addStorageImages",
+          "when": "view == relation-provider",
           "group": "navigation"
         },
         {
@@ -135,12 +135,6 @@
           "name": "Relation",
           "icon": "",
           "contextualTitle": "Atera"
-        },
-        {
-          "id": "code-provider",
-          "name": "Code",
-          "icon": "",
-          "contextualTitle": "Atera"
         }
       ]
     },
@@ -155,9 +149,14 @@
     },
     "commands": [
       {
-        "command": "code-provider.refresh",
-        "title": "Atera: Refresh Code Provider",
-        "icon": "$(refresh)"
+        "command": "relation-provider.addStorageImages",
+        "title": "Atera: Add Storage Images",
+        "icon": "$(database)"
+      },
+      {
+        "command": "relation-provider.executeCustomCmd",
+        "title": "Atera: Execute Custom Cmd",
+        "icon": "$(list-tree)"
       },
       {
         "command": "relation-provider.listActivities",
@@ -222,10 +221,17 @@
           "default": "",
           "markdownDescription": "The **root** folder of the SDK data.\n\nIf specified, allows more advanced utilities such as graphical selection of activities references in relations and more."
         },
-        "atera.sourceRoot": {
+        "atera.sdkRoot": {
           "type": "string",
           "default": "",
-          "markdownDescription": "The **root** folder of the Atera source repository.\n\nIf specified, allows dynamic code base analysis and problem detection."
+          "markdownDescription": "The **root** folder of the SDK executable bin.\n\nIf specified, allows to execute custom commands directly in the SDK folder, preventing _not found exception_ in case of not set global env variable."
+        },
+        "atera.commands": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "markdownDescription": "Specify here custom commands that will be show in the UI of the relation editor.\n\nCommands are defined in the form \n`{ \"name\": string, \"description\": string | undefined, \"cmd\": string, \"icon\": string | undefined, \"requires_sdk\": boolean = true}`\nThe `requires_sdk` field will prevent the command to move into the SDK folder before running the actual command when the **sdkRoot** setting is set.\n\nThe **cmd** field defines the actual command to be excuted and supports _wildcards_, available are:   \n- `${activity}`: the current activity folder name\n- `${storage}`: the current activity storage folder absolute path\n- `${activity_id}`: the current activity id\n- `${folder}`: the current activity root folder\n- `${sdk}`: the sdk root folder if set, `empty` otherwise\n- `${data}`: the data root folder if set, `empty` otherwise."
         }
       }
     }

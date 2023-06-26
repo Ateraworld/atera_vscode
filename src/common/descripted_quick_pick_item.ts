@@ -8,8 +8,16 @@ export class DescriptedQuickPickItem implements vscode.QuickPickItem {
     picked?: boolean | undefined;
     alwaysShow?: boolean | undefined;
     buttons?: readonly vscode.QuickInputButton[] | undefined;
-    constructor(label: string, description: string) {
+    payload?: any | undefined;
+    constructor(
+        label: string,
+        description: string,
+        detail: string | undefined = undefined,
+        payload: any | undefined = undefined
+    ) {
         this.label = label;
         this.description = description;
+        this.payload = payload;
+        this.detail = detail;
     }
 }

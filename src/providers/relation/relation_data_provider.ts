@@ -1,16 +1,18 @@
-import * as vscode from "vscode";
-import { computeAnalysis } from "./editor";
 import path from "path";
 import { Item } from "src/common/item_param";
 import { readDefinitions } from "src/common/utils";
+import * as vscode from "vscode";
+import { computeAnalysis } from "./editor";
 import {
     addImage,
     addLocation,
     addMark,
     addPoint,
     addSection,
+    addStorageImages,
     addSymbol,
     addTag,
+    executeCustomCmd,
     listActivities,
     removeRelationItem,
 } from "./relation_commands";
@@ -58,6 +60,10 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
         vscode.commands.registerCommand("relation-provider.addTag", () => addTag());
         vscode.commands.registerCommand("relation-provider.addLocation", (item: Item) => addLocation(item));
         vscode.commands.registerCommand("relation-provider.listActivities", () => listActivities());
+        vscode.commands.registerCommand("relation-provider.executeCustomCmd", (item: Item | undefined) =>
+            executeCustomCmd(item)
+        );
+        vscode.commands.registerCommand("relation-provider.addStorageImages", () => addStorageImages());
         vscode.commands.registerCommand("relation-provider.addMark", (item: Item | undefined) => addMark(item));
         vscode.commands.registerCommand("relation-provider.addSymbol", () => addSymbol());
         vscode.commands.registerCommand("relation-provider.removeRelationItem", (item: Item) =>
@@ -77,6 +83,7 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
         let items: Item[] = [];
         try {
             let documentModel = JSON.parse(editor.document.getText());
+
             if (!element) {
                 return [
                     new Item("Analysis", "analysis", {
@@ -86,6 +93,10 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                     new Item("Editor", "editor", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                         icon: new vscode.ThemeIcon("edit", new vscode.ThemeColor("charts.blue")),
+                    }),
+                    new Item("Commands", "commands", {
+                        collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+                        icon: new vscode.ThemeIcon("terminal-cmd", new vscode.ThemeColor("charts.blue")),
                     }),
                     new Item("Overview", "overview", {
                         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
@@ -106,6 +117,30 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                             })
                     )
                 );
+            } else if (element.contextValue === "commands") {
+                let config = vscode.workspace.getConfiguration("atera");
+                let commands = config.get("commands") as any;
+                if (commands.length <= 0) {
+                    items.push(
+                        new Item("Custom commands", "info", {
+                            description: "Add custom commands in settings",
+                            tooltip: "To add custom commands, go into settings, under the extension settings of atera",
+                            collapsibleState: vscode.TreeItemCollapsibleState.None,
+                        })
+                    );
+                }
+                for (const cmd of commands) {
+                    items.push(
+                        new Item(cmd.name, "custom-cmd", {
+                            description: cmd.description,
+                            itemModel: cmd,
+                            command: "relation-provider.executeCustomCmd",
+                            tooltip: cmd.cmd,
+                            icon: cmd.icon !== undefined ? new vscode.ThemeIcon(cmd.icon) : undefined,
+                            collapsibleState: vscode.TreeItemCollapsibleState.None,
+                        })
+                    );
+                }
             } else if (element.contextValue === "overview") {
                 items.push(
                     new Item(this.definitionsModel.categories[documentModel.category].name, "category", {

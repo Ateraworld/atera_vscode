@@ -1,19 +1,20 @@
-import * as vscode from "vscode";
 import fs from "fs";
-import { insertTextAtCursor, overrideCurrentRelationModel } from "./editor";
 import path from "path";
-import { compileMark } from "./marked_text_editor";
+import { sanitizeActivityModel } from "src/common/activity";
 import { capitalize } from "src/common/augmentation";
+import { interpretAndExecuteCmd } from "src/common/cmd_executor";
 import { DescriptedQuickPickItem } from "src/common/descripted_quick_pick_item";
 import { Item } from "src/common/item_param";
 import {
-    readDefinitions,
-    elementsInPath,
     computeLocations,
-    toWordCapitalized,
+    elementsInPath,
+    readDefinitions,
     readExistingActivities,
+    toWordCapitalized,
 } from "src/common/utils";
-import { sanitizeActivityModel } from "src/common/activity";
+import * as vscode from "vscode";
+import { insertTextAtCursor, overrideCurrentRelationModel } from "./editor";
+import { compileMark } from "./marked_text_editor";
 
 export async function addTag(): Promise<any> {
     const editor = vscode.window.activeTextEditor;
@@ -265,6 +266,35 @@ export async function addImage(): Promise<void> {
     overrideCurrentRelationModel(documentModel);
 }
 
+export async function addStorageImages(): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showWarningMessage("Editor not valid");
+        return;
+    }
+    let documentModel: any;
+    try {
+        documentModel = JSON.parse(editor.document.getText());
+    } catch (_) {
+        return;
+    }
+    let storagePath = `${editor.document.fileName}/../storage`;
+    if (!fs.existsSync(storagePath)) {
+        vscode.window.showWarningMessage("Storage folder non existing");
+        return;
+    }
+    let images = elementsInPath(storagePath)
+        .filter((e) => e.endsWith(".webp"))
+        .map((e) => path.parse(e).base);
+    for (const i of images) {
+        let p = path.parse(i);
+        let id = p.name.toLowerCase().replaceAll(" ", "_");
+        if (documentModel.images[id] !== undefined) continue;
+        documentModel.images[id] = { url: `activities/${documentModel.id}/${id}.webp`, type: "storage", title: "" };
+    }
+    await overrideCurrentRelationModel(documentModel);
+}
+
 export async function listActivities(): Promise<void> {
     var acts = await readExistingActivities();
     let actId = await vscode.window.showQuickPick(
@@ -361,7 +391,20 @@ export async function addSymbol(): Promise<void> {
         await insertTextAtCursor(symbol.label);
     }
 }
-
+export async function executeCustomCmd(item: Item | undefined): Promise<void> {
+    if (item !== undefined) {
+        await interpretAndExecuteCmd(item.itemModel);
+    } else {
+        let config = vscode.workspace.getConfiguration("atera");
+        let commands = config.get("commands") as any[];
+        let cmd = await vscode.window.showQuickPick(
+            commands.map((e) => new DescriptedQuickPickItem(e.name ?? "", e.description, e.cmd, e)),
+            { title: "Commands", placeHolder: "select a custom command to execute" }
+        );
+        if (cmd === undefined) return;
+        await interpretAndExecuteCmd(cmd.payload);
+    }
+}
 export async function removeRelationItem(item: Item): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
