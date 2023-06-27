@@ -167,10 +167,12 @@ export function sanitizeActivityModel(model: any, { fix = false }: { fix?: boole
                 warnings.push("stacco: point is missing");
             }
         }
-
-        let storedTags = Object.entries(
-            JSON.parse(fs.readFileSync(path.join(dataRoot, "common", "definitions.json")).toString()).tags
-        );
+        let definitions = JSON.parse(fs.readFileSync(path.join(dataRoot, "common", "definitions.json")).toString());
+        let categories = Object.entries(definitions.categories);
+        if (!categories.find((c) => c[0] == model.category)) {
+            problems.push(model.category + " invalid category id");
+        }
+        let storedTags = Object.entries(definitions.tags);
         for (let [k, v] of tags) {
             if (storedTags.find((t) => t[0] === k) === undefined) {
                 problems.push(k + " tag does not exist");

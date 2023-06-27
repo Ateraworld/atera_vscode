@@ -98,6 +98,11 @@
           "command": "relation-provider.refresh",
           "when": "view == relation-provider",
           "group": "navigation"
+        },
+        {
+          "command": "commands-provider.refresh",
+          "when": "view == commands-provider",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -135,6 +140,12 @@
           "name": "Relation",
           "icon": "",
           "contextualTitle": "Atera"
+        },
+        {
+          "id": "commands-provider",
+          "name": "Commands",
+          "icon": "terminal-cmd",
+          "contextualTitle": "Atera"
         }
       ]
     },
@@ -154,7 +165,7 @@
         "icon": "$(database)"
       },
       {
-        "command": "relation-provider.executeCustomCmd",
+        "command": "commands-provider.executeCustomCmd",
         "title": "Atera: Execute Custom Cmd",
         "icon": "$(list-tree)"
       },
@@ -181,6 +192,11 @@
       {
         "command": "relation-provider.refresh",
         "title": "Atera: Refresh Relation Editor",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "commands-provider.refresh",
+        "title": "Atera: Refresh Commands",
         "icon": "$(refresh)"
       },
       {

@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { sanitizeActivityModel } from "src/common/activity";
 import { capitalize } from "src/common/augmentation";
-import { interpretAndExecuteCmd } from "src/common/cmd_executor";
 import { DescriptedQuickPickItem } from "src/common/descripted_quick_pick_item";
 import { Item } from "src/common/item_param";
 import {
@@ -391,20 +389,7 @@ export async function addSymbol(): Promise<void> {
         await insertTextAtCursor(symbol.label);
     }
 }
-export async function executeCustomCmd(item: Item | undefined): Promise<void> {
-    if (item !== undefined) {
-        await interpretAndExecuteCmd(item.itemModel);
-    } else {
-        let config = vscode.workspace.getConfiguration("atera");
-        let commands = config.get("commands") as any[];
-        let cmd = await vscode.window.showQuickPick(
-            commands.map((e) => new DescriptedQuickPickItem(e.name ?? "", e.description, e.cmd, e)),
-            { title: "Commands", placeHolder: "select a custom command to execute" }
-        );
-        if (cmd === undefined) return;
-        await interpretAndExecuteCmd(cmd.payload);
-    }
-}
+
 export async function removeRelationItem(item: Item): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
