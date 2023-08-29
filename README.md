@@ -8,11 +8,14 @@ In order to integrate with the framework, the extension requires some configurat
 
 To discover more, go into the **vscode** settings and search for `Atera`, all related settings will be displayed.
 
-## Development setup
+### Installation
+**In vscode**  
+`File > Preferences > Extensions > ⋯ (Views and More Actions) > Install from VSIX` and select the `atera-vscode.vsix` file.
 
-In order to install the `atera_admin_sdk` private dependency, you must be logged in in **Git**.
-
-To learn how to log in and store Git credentals visit the official [guide](https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git?platform=windows)
+**In CLI**    
+```
+code --install-extension atera-vscode.vsix
+```
 
 **Resources**
 

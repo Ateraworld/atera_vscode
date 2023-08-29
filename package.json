@@ -107,6 +107,11 @@
       ],
       "view/item/context": [
         {
+          "command": "commands-provider.executeCustomCmd",
+          "when": "view == commands-provider && viewItem == custom-cmd",
+          "group": "inline"
+        },
+        {
           "command": "relation-provider.addPoint",
           "when": "view == relation-provider && viewItem == points",
           "group": "inline"
@@ -167,7 +172,7 @@
       {
         "command": "commands-provider.executeCustomCmd",
         "title": "Atera: Execute Custom Cmd",
-        "icon": "$(list-tree)"
+        "icon": "$(play)"
       },
       {
         "command": "relation-provider.listActivities",
