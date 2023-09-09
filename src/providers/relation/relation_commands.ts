@@ -293,14 +293,21 @@ export async function addStorageImages(): Promise<void> {
     await overrideCurrentRelationModel(documentModel);
 }
 
-export async function listActivities(): Promise<void> {
+export async function listActivities({
+    exclusions = [],
+    insertValue = true,
+}: {
+    exclusions?: string[];
+    insertValue?: boolean;
+} = {}): Promise<string | undefined> {
     var acts = await readExistingActivities();
     let actId = await vscode.window.showQuickPick(
-        acts.map((e) => new DescriptedQuickPickItem(e[1].name ?? "", e[0])),
+        acts.filter((e) => !exclusions.includes(e[0])).map((e) => new DescriptedQuickPickItem(e[1].name ?? "", e[0])),
         { title: "Activities", placeHolder: "select an existing activity" }
     );
-    if (actId === undefined || actId.description === undefined) return;
-    await insertTextAtCursor(actId.description);
+    if (actId === undefined || actId.description === undefined) return undefined;
+    if (insertValue) await insertTextAtCursor(actId.description);
+    return actId.description;
 }
 
 export async function addLocation(item: Item): Promise<void> {
@@ -390,6 +397,25 @@ export async function addSymbol(): Promise<void> {
     }
 }
 
+export async function addLink(): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showWarningMessage("Editor not valid");
+        return;
+    }
+    let documentModel: any;
+    try {
+        documentModel = JSON.parse(editor.document.getText());
+    } catch (_) {
+        return;
+    }
+    var act = await listActivities({ insertValue: false, exclusions: Object.keys(documentModel.activities_links) });
+    if (act !== undefined) {
+        documentModel.activities_links[act] = true;
+        overrideCurrentRelationModel(documentModel);
+    }
+}
+
 export async function removeRelationItem(item: Item): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -429,11 +455,15 @@ export async function removeRelationItem(item: Item): Promise<void> {
     } else if (item.contextValue == "tag-instance") {
         delete documentModel.tags[item.label];
         overrideCurrentRelationModel(documentModel);
+    } else if (item.contextValue == "link-instance") {
+        console.log(item.description);
+        if (item.description === undefined) return;
+        delete documentModel.activities_links[item.description as string];
+        overrideCurrentRelationModel(documentModel);
     }
 }
 
 export async function addMark(item: Item | undefined): Promise<void> {
-    console.log("addmark");
     if (item === undefined) {
         await compileMark({});
         return;

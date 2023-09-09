@@ -3,7 +3,7 @@
   "displayName": "Atera",
   "description": "The official Atera vscode extension",
   "icon": "assets/logo_4k.png",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "author": {
     "name": "Ateraworld",
     "email": "atera.world@gmail.com",
@@ -118,12 +118,17 @@
         },
         {
           "command": "relation-provider.removeRelationItem",
-          "when": "view == relation-provider && (viewItem == point-instance || viewItem == image-instance || viewItem == section-instance || viewItem == tag-instance)",
+          "when": "view == relation-provider && (viewItem == point-instance || viewItem == image-instance || viewItem == section-instance || viewItem == tag-instance || viewItem == link-instance)",
           "group": "inline"
         },
         {
           "command": "relation-provider.addImage",
           "when": "view == relation-provider && viewItem == images",
+          "group": "inline"
+        },
+        {
+          "command": "relation-provider.addLink",
+          "when": "view == relation-provider && viewItem == links",
           "group": "inline"
         },
         {
@@ -168,6 +173,11 @@
         "command": "relation-provider.addStorageImages",
         "title": "Atera: Add Storage Images",
         "icon": "$(database)"
+      },
+      {
+        "command": "relation-provider.addLink",
+        "title": "Atera: Add Activity Link",
+        "icon": "$(diff-added)"
       },
       {
         "command": "commands-provider.executeCustomCmd",

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { elementsInPath, getDataRoot } from "./utils";
+import { elementsInPath, getDataRoot, readExistingActivities } from "./utils";
 
 export const attestationPeriodRegExp = new RegExp(
     "^(?<startd>0?[1-9]|[12][0-9]|3[01])-(?<startm>0?[1-9]|1[0-2])/(?<endd>0?[1-9]|[12][0-9]|3[01])-(?<endm>0?[1-9]|1[0-2])$"
@@ -30,6 +30,27 @@ export function isActivityFolderValid(folder: string): string | undefined {
         return "model is not a json";
     }
 }
+
+export async function computeActivitiesProxy(): Promise<any> {
+    let root = getDataRoot();
+    if (root === undefined) {
+        return {};
+    }
+    if (!fs.existsSync(`${root}/activities`)) {
+        return {};
+    }
+    let proxy: any = {};
+    let activities = await readExistingActivities();
+    for (const a of activities) {
+        proxy[a[1].id] = {
+            name: a[1].name,
+            poster: a[1].poster,
+            category: a[1].category,
+        };
+    }
+    return proxy;
+}
+
 export function readExistingActivitiesInPath(path: string): [string, any][] {
     if (path === undefined || !fs.existsSync(path)) {
         return [];

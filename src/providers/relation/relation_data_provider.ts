@@ -1,10 +1,12 @@
 import path from "path";
+import { computeActivitiesProxy } from "src/common/activity";
 import { Item } from "src/common/item_param";
 import { readDefinitions } from "src/common/utils";
 import * as vscode from "vscode";
 import { computeAnalysis } from "./editor";
 import {
     addImage,
+    addLink,
     addLocation,
     addMark,
     addPoint,
@@ -21,6 +23,7 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
 
     private analysisProblems: [string, any][] = [];
     private definitionsModel: any;
+    private activitiesProxy: any;
     private _onDidChangeTreeData: vscode.EventEmitter<Item | undefined | null | void> = new vscode.EventEmitter<
         Item | undefined | null | void
     >();
@@ -49,6 +52,7 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
             }
             this._onDidChangeTreeData.fire();
         }
+        computeActivitiesProxy().then((proxy) => (this.activitiesProxy = proxy));
     }
 
     registerComands() {
@@ -62,6 +66,7 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
         vscode.commands.registerCommand("relation-provider.addStorageImages", () => addStorageImages());
         vscode.commands.registerCommand("relation-provider.addMark", (item: Item | undefined) => addMark(item));
         vscode.commands.registerCommand("relation-provider.addSymbol", () => addSymbol());
+        vscode.commands.registerCommand("relation-provider.addLink", (item: Item | undefined) => addLink());
         vscode.commands.registerCommand("relation-provider.removeRelationItem", (item: Item) =>
             removeRelationItem(item)
         );
@@ -143,6 +148,10 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                             collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
                             icon: new vscode.ThemeIcon("device-camera"),
                         }),
+                        new Item("Links", "links", {
+                            collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+                            icon: new vscode.ThemeIcon("link"),
+                        }),
                     ]
                 );
 
@@ -193,6 +202,20 @@ export class RelationDataProvider implements vscode.TreeDataProvider<Item> {
                             })
                     )
                 );
+            } else if (element.contextValue === "links") {
+                if (this.activitiesProxy === null) return [];
+                let entries = Object.entries(documentModel.activities_links ?? []) ?? {};
+                items.push(
+                    ...entries.map((e) => {
+                        let m = this.activitiesProxy[e[0]];
+                        return new Item(m.name, "link-instance", {
+                            collapsibleState: vscode.TreeItemCollapsibleState.None,
+                            description: e[0],
+                            itemModel: { id: e[0], model: m },
+                        });
+                    })
+                );
+                return Promise.resolve(items);
             } else if (element.contextValue === "sections") {
                 let entries = Object.entries(documentModel.relation.sections);
                 items.push(
